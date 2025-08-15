@@ -13,4 +13,8 @@ export interface FileRepository {
     fileName: string,
     content: string
   ): Promise<File | null>;
+  deleteFile(
+    projectName: string,
+    fileName: string
+  ): Promise<boolean>;
 }
