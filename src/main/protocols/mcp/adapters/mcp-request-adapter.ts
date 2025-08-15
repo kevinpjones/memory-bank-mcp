@@ -21,17 +21,40 @@ export const adaptMcpRequestHandler = async <
 
     const isError = response.statusCode < 200 || response.statusCode >= 300;
 
+    // MCP specification compliant response format
+    if (isError) {
+      const errorDetails = serializeError(response.body, false);
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error: ${errorDetails.error}\nType: ${errorDetails.name}${errorDetails.code ? `\nCode: ${errorDetails.code}` : ''}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    // For successful responses, handle different content types
+    let responseText: string;
+    if (typeof response.body === 'string') {
+      responseText = response.body;
+    } else if (Array.isArray(response.body)) {
+      responseText = JSON.stringify(response.body, null, 2);
+    } else if (typeof response.body === 'object' && response.body !== null) {
+      responseText = JSON.stringify(response.body, null, 2);
+    } else {
+      responseText = String(response.body);
+    }
+
     return {
-      tools: [],
-      isError,
       content: [
         {
           type: "text",
-          text: isError
-            ? JSON.stringify(serializeError(response.body))
-            : response.body?.toString(),
+          text: responseText,
         },
       ],
+      isError: false,
     };
   };
 };

@@ -14,6 +14,7 @@ export default () => {
   router.setTool({
     schema: {
       name: "list_projects",
+      title: "List Projects",
       description: "List all projects in the memory bank",
       inputSchema: {
         type: "object",
@@ -27,6 +28,7 @@ export default () => {
   router.setTool({
     schema: {
       name: "list_project_files",
+      title: "List Project Files",
       description: "List all files within a specific project",
       inputSchema: {
         type: "object",
@@ -45,6 +47,7 @@ export default () => {
   router.setTool({
     schema: {
       name: "memory_bank_read",
+      title: "Read Memory Bank File",
       description: "Read a memory bank file for a specific project",
       inputSchema: {
         type: "object",
@@ -67,6 +70,7 @@ export default () => {
   router.setTool({
     schema: {
       name: "memory_bank_write",
+      title: "Write Memory Bank File",
       description: "Create a new memory bank file for a specific project",
       inputSchema: {
         type: "object",
@@ -93,6 +97,7 @@ export default () => {
   router.setTool({
     schema: {
       name: "memory_bank_update",
+      title: "Update Memory Bank File",
       description: "Update an existing memory bank file for a specific project",
       inputSchema: {
         type: "object",
