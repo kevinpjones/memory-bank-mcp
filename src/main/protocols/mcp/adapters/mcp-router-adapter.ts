@@ -28,11 +28,11 @@ export class McpRouterAdapter {
     );
   }
 
+  // MCP specification compliant tool capabilities format
   public getToolCapabilities() {
-    return Array.from(this.tools.keys()).reduce((acc, name: string) => {
-      acc[name] = this.tools.get(name)?.schema!;
-      return acc;
-    }, {} as Record<string, Tool>);
+    return {
+      listChanged: false // Set to true if the server supports notifications when tools change
+    };
   }
 
   public setTool({ schema, handler }: MCPRoute): McpRouterAdapter {
