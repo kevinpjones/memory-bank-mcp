@@ -4,6 +4,8 @@ import {
   CallToolRequestSchema,
   ErrorCode,
   ListToolsRequestSchema,
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema,
   McpError,
   ServerResult as MCPResponse,
 } from "@modelcontextprotocol/sdk/types.js";
@@ -23,10 +25,12 @@ export class McpServerAdapter {
       {
         capabilities: {
           tools: this.mcpRouter.getToolCapabilities(),
+          prompts: this.mcpRouter.getPromptCapabilities(),
         },
       }
     );
 
+    // Tool handlers
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: this.mcpRouter.getToolsSchemas(),
     }));
@@ -40,6 +44,32 @@ export class McpServerAdapter {
           throw new McpError(
             ErrorCode.MethodNotFound,
             `Tool ${name} not found`
+          );
+        }
+        return await handler(request);
+      }
+    );
+
+    // Prompt handlers
+    this.server.setRequestHandler(ListPromptsRequestSchema, async (request) => {
+      const handler = this.mcpRouter.getPromptListHandler();
+      if (!handler) {
+        throw new McpError(
+          ErrorCode.MethodNotFound,
+          "Prompts not supported"
+        );
+      }
+      return await handler(request);
+    });
+
+    this.server.setRequestHandler(
+      GetPromptRequestSchema,
+      async (request): Promise<MCPResponse> => {
+        const handler = this.mcpRouter.getPromptGetHandler();
+        if (!handler) {
+          throw new McpError(
+            ErrorCode.MethodNotFound,
+            "Prompts not supported"
           );
         }
         return await handler(request);
