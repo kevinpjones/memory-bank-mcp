@@ -1,4 +1,5 @@
 import {
+  makeDeleteController,
   makeListProjectFilesController,
   makeListProjectsController,
   makeReadController,
@@ -114,6 +115,28 @@ export default () => {
       },
     },
     handler: adaptMcpRequestHandler(makeUpdateController()),
+  });
+
+  router.setTool({
+    schema: {
+      name: "memory_bank_delete",
+      description: "Delete a memory bank file by archiving it with a timestamp",
+      inputSchema: {
+        type: "object",
+        properties: {
+          projectName: {
+            type: "string",
+            description: "The name of the project",
+          },
+          fileName: {
+            type: "string",
+            description: "The name of the file to delete",
+          },
+        },
+        required: ["projectName", "fileName"],
+      },
+    },
+    handler: adaptMcpRequestHandler(makeDeleteController()),
   });
 
   return router;

@@ -100,4 +100,35 @@ export class FsFileRepository implements FileRepository {
 
     return await this.loadFile(projectName, fileName);
   }
+
+  /**
+   * Deletes a file by moving it to the archive directory
+   * @param projectName The name of the project
+   * @param fileName The name of the file
+   * @returns True if the file was successfully archived, false if it doesn't exist
+   */
+  async deleteFile(projectName: string, fileName: string): Promise<boolean> {
+    const filePath = path.join(this.rootDir, projectName, fileName);
+
+    const fileExists = await fs.pathExists(filePath);
+    if (!fileExists) {
+      return false;
+    }
+
+    // Create archive directory structure
+    const archiveProjectPath = path.join(this.rootDir, '.archive', projectName);
+    await fs.ensureDir(archiveProjectPath);
+
+    // Generate timestamped filename
+    const timestamp = new Date().toISOString().replace(/:/g, '_');
+    const fileExtension = path.extname(fileName);
+    const baseName = path.basename(fileName, fileExtension);
+    const archivedFileName = `${baseName}-DELETED-${timestamp}${fileExtension}`;
+    const archivePath = path.join(archiveProjectPath, archivedFileName);
+
+    // Move file to archive
+    await fs.move(filePath, archivePath);
+
+    return true;
+  }
 }

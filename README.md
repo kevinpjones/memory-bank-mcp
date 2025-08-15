@@ -35,11 +35,18 @@ The Memory Bank MCP Server transforms traditional file-based memory banks into a
   - Security through project isolation
 
 - **Core Operations**
-  - Read/write/update memory bank files
-  - List available projects
+  - Read/write/update/delete memory bank files
+  - Safe file deletion with automatic archiving
+  - List available projects (excludes hidden directories)
   - List files within projects
   - Project existence validation
   - Safe read-only operations
+
+- **Enhanced Security & Safety**
+  - Hidden directory filtering (directories starting with `.` are excluded from project listings)
+  - Safe file deletion with archiving (files are moved to `.archive/` with timestamps instead of permanent deletion)
+  - Archive structure preserves original project organization
+  - Timestamped file naming prevents conflicts: `filename-DELETED-<ISO8601-timestamp>.ext`
 
 ## Installation
 
@@ -78,6 +85,7 @@ Add the following configuration to your MCP settings:
       "memory_bank_read",
       "memory_bank_write",
       "memory_bank_update",
+      "memory_bank_delete",
       "list_projects",
       "list_project_files"
     ]
@@ -93,7 +101,8 @@ Add the following configuration to your MCP settings:
   - `memory_bank_read`: Read memory bank files
   - `memory_bank_write`: Create new memory bank files
   - `memory_bank_update`: Update existing memory bank files
-  - `list_projects`: List available projects
+  - `memory_bank_delete`: Delete memory bank files (archives them safely)
+  - `list_projects`: List available projects (excludes hidden directories)
   - `list_project_files`: List files within a project
 
 ## Using with Cursor
@@ -192,7 +201,8 @@ npm run dev
         "list_project_files",
         "memory_bank_read",
         "memory_bank_update",
-        "memory_bank_write"
+        "memory_bank_write",
+        "memory_bank_delete"
       ]
     }
     ```

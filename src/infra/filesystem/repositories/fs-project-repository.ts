@@ -31,6 +31,7 @@ export class FsProjectRepository implements ProjectRepository {
     const entries = await fs.readdir(this.rootDir, { withFileTypes: true });
     const projects: Project[] = entries
       .filter((entry) => entry.isDirectory())
+      .filter((entry) => !entry.name.startsWith('.'))
       .map((entry) => entry.name);
 
     return projects;
