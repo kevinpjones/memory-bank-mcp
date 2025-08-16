@@ -48,6 +48,83 @@ The Memory Bank MCP Server transforms traditional file-based memory banks into a
   - Archive structure preserves original project organization
   - Timestamped file naming prevents conflicts: `filename-DELETED-<ISO8601-timestamp>.ext`
 
+- **MCP Server Prompts Support**
+  - Discover and execute reusable prompt templates
+  - Parameter substitution with validation
+  - Organized prompt storage in `.prompts` directory
+  - Support for required and optional parameters
+
+## MCP Server Prompts
+
+The server supports the [MCP Server Prompts specification](https://modelcontextprotocol.io/specification/2025-06-18/server/prompts), allowing you to create and use reusable prompt templates.
+
+### Prompt Storage
+
+Prompts are stored as Markdown files in a `.prompts` directory at your memory bank root:
+- YAML frontmatter contains metadata (name, title, description, arguments)
+- Markdown content serves as the prompt template
+- Use `{{param_name}}` syntax for parameter substitution
+
+### Example Prompt File
+
+Create `.prompts/code-review.md`:
+
+```markdown
+---
+name: code-review
+title: Code Review Assistant
+description: Analyzes code for quality, best practices, and potential improvements
+arguments:
+  - name: code
+    description: The code to review
+    required: true
+  - name: language
+    description: Programming language of the code
+    required: false
+  - name: focus
+    description: Specific aspect to focus on (security, performance, style, etc.)
+    required: false
+---
+
+Please conduct a thorough code review of the following {{language}} code:
+
+```{{language}}
+{{code}}
+```
+
+Please pay special attention to: {{focus}}
+
+Analyze the code for:
+- Code quality and readability
+- Best practices adherence
+- Potential bugs or issues
+- Performance considerations
+- Security vulnerabilities
+- Suggested improvements
+
+Provide specific recommendations with explanations.
+```
+
+### Using Prompts
+
+MCP clients can:
+1. **Discover prompts**: Use `prompts/list` to see available prompt templates
+2. **Execute prompts**: Use `prompts/get` with a prompt name and parameters to get the rendered result
+
+### Sample Prompts Included
+
+The server includes three sample prompts for immediate use:
+- **code-review**: Analyzes code for quality and improvements
+- **doc-generator**: Generates comprehensive documentation
+- **explain-concept**: Explains technical concepts in simple terms
+
+### Adding Custom Prompts
+
+1. Create `.md` files in the `.prompts` directory
+2. Include YAML frontmatter with prompt metadata
+3. Use `{{param_name}}` for parameter substitution in the template
+4. Define required and optional arguments in the metadata
+
 ## Installation
 
 To install Memory Bank Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@alioshr/memory-bank-mcp):
