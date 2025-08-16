@@ -5,13 +5,17 @@ import {
   makeReadController,
   makeUpdateController,
   makeWriteController,
+  makeListPromptsController,
+  makeGetPromptController,
 } from "../../factories/controllers/index.js";
 import { adaptMcpRequestHandler } from "./adapters/mcp-request-adapter.js";
+import { adaptMcpListPromptsHandler, adaptMcpGetPromptHandler } from "./adapters/mcp-prompt-adapter.js";
 import { McpRouterAdapter } from "./adapters/mcp-router-adapter.js";
 
 export default () => {
   const router = new McpRouterAdapter();
 
+  // Tool endpoints
   router.setTool({
     schema: {
       name: "list_projects",
@@ -143,6 +147,15 @@ export default () => {
     },
     handler: adaptMcpRequestHandler(makeDeleteController()),
   });
+
+  // Prompt endpoints
+  router.setPromptListHandler(
+    adaptMcpListPromptsHandler(makeListPromptsController())
+  );
+
+  router.setPromptGetHandler(
+    adaptMcpGetPromptHandler(makeGetPromptController())
+  );
 
   return router;
 };

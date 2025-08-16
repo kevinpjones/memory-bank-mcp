@@ -2,6 +2,7 @@ import {
   Request as MCPRequest,
   ServerResult as MCPResponse,
   Tool,
+  Prompt,
 } from "@modelcontextprotocol/sdk/types.js";
 
 export type MCPRequestHandler = (request: MCPRequest) => Promise<MCPResponse>;
@@ -11,11 +12,26 @@ export type MCPRoute = {
   handler: Promise<MCPRequestHandler>;
 };
 
+export type MCPPromptRoute = {
+  schema: Prompt;
+  handler: Promise<MCPRequestHandler>;
+};
+
 export class McpRouterAdapter {
   private tools: Map<string, MCPRoute> = new Map();
+  private promptListHandler: MCPRequestHandler | null = null;
+  private promptGetHandler: MCPRequestHandler | null = null;
 
   public getToolHandler(name: string): MCPRoute["handler"] | undefined {
     return this.tools.get(name)?.handler;
+  }
+
+  public getPromptListHandler(): MCPRequestHandler | null {
+    return this.promptListHandler;
+  }
+
+  public getPromptGetHandler(): MCPRequestHandler | null {
+    return this.promptGetHandler;
   }
 
   private mapTools(callback: (name: string) => any) {
@@ -35,8 +51,25 @@ export class McpRouterAdapter {
     };
   }
 
+  // MCP specification compliant prompt capabilities format
+  public getPromptCapabilities() {
+    return {
+      listChanged: false // Set to true if the server supports notifications when prompts change
+    };
+  }
+
   public setTool({ schema, handler }: MCPRoute): McpRouterAdapter {
     this.tools.set(schema.name, { schema, handler });
+    return this;
+  }
+
+  public setPromptListHandler(handler: MCPRequestHandler): McpRouterAdapter {
+    this.promptListHandler = handler;
+    return this;
+  }
+
+  public setPromptGetHandler(handler: MCPRequestHandler): McpRouterAdapter {
+    this.promptGetHandler = handler;
     return this;
   }
 }

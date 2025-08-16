@@ -4,3 +4,5 @@ export * from "./list-projects-factory.js";
 export * from "./read-file-factory.js";
 export * from "./update-file-factory.js";
 export * from "./write-file-factory.js";
+export * from "./list-prompts-factory.js";
+export * from "./get-prompt-factory.js";
