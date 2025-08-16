@@ -54,6 +54,63 @@ The Memory Bank MCP Server transforms traditional file-based memory banks into a
   - Organized prompt storage in `.prompts` directory
   - Support for required and optional parameters
 
+## Installation
+
+To install Memory Bank Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@alioshr/memory-bank-mcp):
+
+```bash
+npx -y @smithery/cli install @alioshr/memory-bank-mcp --client claude
+```
+
+This will set up the MCP server configuration automatically. Alternatively, you can configure the server manually as described in the Configuration section below.
+
+## Quick Start
+
+1. Configure the MCP server in your settings (see Configuration section below)
+2. Start using the memory bank tools in your AI assistant
+
+## Using with Cline/Roo Code
+
+The memory bank MCP server needs to be configured in your Cline MCP settings file. The location depends on your setup:
+
+- For Cline extension: `~/Library/Application Support/Cursor/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
+- For Roo Code VS Code extension: `~/Library/Application Support/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json`
+
+Add the following configuration to your MCP settings:
+
+```json
+{
+  "allpepper-memory-bank": {
+    "command": "npx",
+    "args": ["-y", "@allpepper/memory-bank-mcp"],
+    "env": {
+      "MEMORY_BANK_ROOT": "<path-to-bank>"
+    },
+    "disabled": false,
+    "autoApprove": [
+      "memory_bank_read",
+      "memory_bank_write",
+      "memory_bank_update",
+      "memory_bank_delete",
+      "list_projects",
+      "list_project_files"
+    ]
+  }
+}
+```
+
+### Configuration Details
+
+- `MEMORY_BANK_ROOT`: Directory where project memory banks will be stored (e.g., `/path/to/memory-bank`)
+- `disabled`: Set to `false` to enable the server
+- `autoApprove`: List of operations that don't require explicit user approval:
+  - `memory_bank_read`: Read memory bank files
+  - `memory_bank_write`: Create new memory bank files
+  - `memory_bank_update`: Update existing memory bank files
+  - `memory_bank_delete`: Delete memory bank files (archives them safely)
+  - `list_projects`: List available projects (excludes hidden directories)
+  - `list_project_files`: List files within a project
+
 ## MCP Server Prompts
 
 The server supports the [MCP Server Prompts specification](https://modelcontextprotocol.io/specification/2025-06-18/server/prompts), allowing you to create and use reusable prompt templates.
@@ -125,62 +182,6 @@ The server includes three sample prompts for immediate use:
 3. Use `{{param_name}}` for parameter substitution in the template
 4. Define required and optional arguments in the metadata
 
-## Installation
-
-To install Memory Bank Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@alioshr/memory-bank-mcp):
-
-```bash
-npx -y @smithery/cli install @alioshr/memory-bank-mcp --client claude
-```
-
-This will set up the MCP server configuration automatically. Alternatively, you can configure the server manually as described in the Configuration section below.
-
-## Quick Start
-
-1. Configure the MCP server in your settings (see Configuration section below)
-2. Start using the memory bank tools in your AI assistant
-
-## Using with Cline/Roo Code
-
-The memory bank MCP server needs to be configured in your Cline MCP settings file. The location depends on your setup:
-
-- For Cline extension: `~/Library/Application Support/Cursor/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
-- For Roo Code VS Code extension: `~/Library/Application Support/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json`
-
-Add the following configuration to your MCP settings:
-
-```json
-{
-  "allpepper-memory-bank": {
-    "command": "npx",
-    "args": ["-y", "@allpepper/memory-bank-mcp"],
-    "env": {
-      "MEMORY_BANK_ROOT": "<path-to-bank>"
-    },
-    "disabled": false,
-    "autoApprove": [
-      "memory_bank_read",
-      "memory_bank_write",
-      "memory_bank_update",
-      "memory_bank_delete",
-      "list_projects",
-      "list_project_files"
-    ]
-  }
-}
-```
-
-### Configuration Details
-
-- `MEMORY_BANK_ROOT`: Directory where project memory banks will be stored (e.g., `/path/to/memory-bank`)
-- `disabled`: Set to `false` to enable the server
-- `autoApprove`: List of operations that don't require explicit user approval:
-  - `memory_bank_read`: Read memory bank files
-  - `memory_bank_write`: Create new memory bank files
-  - `memory_bank_update`: Update existing memory bank files
-  - `memory_bank_delete`: Delete memory bank files (archives them safely)
-  - `list_projects`: List available projects (excludes hidden directories)
-  - `list_project_files`: List files within a project
 
 ## Using with Cursor
 
@@ -212,7 +213,7 @@ env MEMORY_BANK_ROOT=<path-to-bank> npx -y @allpepper/memory-bank-mcp@latest
         }
 ```
 
-## Custom IA instructions
+## Custom AI instructions
 
 This section contains the instructions that should be pasted on the AI custom instructions, either for Cline, Claude or Cursor, or any other MCP client. You should copy and paste these rules. For reference, see [custom-instructions.md](custom-instructions.md) which contains these rules.
 
