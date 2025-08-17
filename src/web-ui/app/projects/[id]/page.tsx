@@ -3,7 +3,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import Layout from '@/components/Layout';
+import dynamic from 'next/dynamic';
+
+const Layout = dynamic(() => import('@/components/Layout'), { ssr: false });
 import { ProjectInfo, FileInfo } from '@/lib/memory-bank';
 import { 
   DocumentTextIcon, 

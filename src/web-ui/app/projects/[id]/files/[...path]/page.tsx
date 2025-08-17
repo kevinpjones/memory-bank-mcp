@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import Layout from '@/components/Layout';
+import dynamic from 'next/dynamic';
+
+const Layout = dynamic(() => import('@/components/Layout'), { ssr: false });
 import { FileInfo } from '@/lib/memory-bank';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';

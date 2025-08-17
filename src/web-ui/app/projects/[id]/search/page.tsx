@@ -4,7 +4,9 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Layout from '@/components/Layout';
+import dynamic from 'next/dynamic';
+
+const Layout = dynamic(() => import('@/components/Layout'), { ssr: false });
 import { SearchResponse } from '@/lib/memory-bank';
 import { 
   MagnifyingGlassIcon, 
