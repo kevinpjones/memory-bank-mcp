@@ -206,10 +206,89 @@ export default function FileViewPage() {
           
           <div className="p-6">
             {data.file.isMarkdown ? (
-              <div className="prose prose-gray dark:prose-invert max-w-none">
+              <div className="prose prose-lg prose-gray dark:prose-invert max-w-none prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-p:text-gray-700 dark:prose-p:text-gray-300">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   rehypePlugins={[rehypeHighlight, rehypeRaw]}
+                  components={{
+                    h1: ({ children, ...props }) => (
+                      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mt-8 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2" {...props}>
+                        {children}
+                      </h1>
+                    ),
+                    h2: ({ children, ...props }) => (
+                      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mt-6 mb-3" {...props}>
+                        {children}
+                      </h2>
+                    ),
+                    h3: ({ children, ...props }) => (
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mt-5 mb-2" {...props}>
+                        {children}
+                      </h3>
+                    ),
+                    h4: ({ children, ...props }) => (
+                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white mt-4 mb-2" {...props}>
+                        {children}
+                      </h4>
+                    ),
+                    h5: ({ children, ...props }) => (
+                      <h5 className="text-base font-semibold text-gray-900 dark:text-white mt-4 mb-2" {...props}>
+                        {children}
+                      </h5>
+                    ),
+                    h6: ({ children, ...props }) => (
+                      <h6 className="text-sm font-semibold text-gray-900 dark:text-white mt-4 mb-2" {...props}>
+                        {children}
+                      </h6>
+                    ),
+                    p: ({ children, ...props }) => (
+                      <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed" {...props}>
+                        {children}
+                      </p>
+                    ),
+                    ul: ({ children, ...props }) => (
+                      <ul className="list-disc list-inside space-y-1 mb-4 text-gray-700 dark:text-gray-300" {...props}>
+                        {children}
+                      </ul>
+                    ),
+                    ol: ({ children, ...props }) => (
+                      <ol className="list-decimal list-inside space-y-1 mb-4 text-gray-700 dark:text-gray-300" {...props}>
+                        {children}
+                      </ol>
+                    ),
+                    li: ({ children, ...props }) => (
+                      <li className="mb-1" {...props}>
+                        {children}
+                      </li>
+                    ),
+                    blockquote: ({ children, ...props }) => (
+                      <blockquote className="border-l-4 border-blue-500 pl-4 py-2 my-4 bg-blue-50 dark:bg-blue-900/20 italic" {...props}>
+                        {children}
+                      </blockquote>
+                    ),
+                    code: ({ inline, children, ...props }: any) => {
+                      return inline ? (
+                        <code className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+                          {children}
+                        </code>
+                      ) : (
+                        <code className="block bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto font-mono text-sm" {...props}>
+                          {children}
+                        </code>
+                      );
+                    },
+                    a: ({ children, href, ...props }) => (
+                      <a
+                        href={href}
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
+                        target={href?.startsWith('http') ? '_blank' : undefined}
+                        rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+                        {...props}
+                      >
+                        {children}
+                      </a>
+                    ),
+                  }}
                 >
                   {data.content}
                 </ReactMarkdown>
