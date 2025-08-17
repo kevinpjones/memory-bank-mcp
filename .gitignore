@@ -9,3 +9,7 @@ dist
 coverage
 core
 .idea
+
+# Next.js web-ui
+src/web-ui/.next/
+src/web-ui/out/
