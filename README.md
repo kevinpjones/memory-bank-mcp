@@ -217,6 +217,186 @@ env MEMORY_BANK_ROOT=<path-to-bank> npx -y @allpepper/memory-bank-mcp@latest
 
 This section contains the instructions that should be pasted on the AI custom instructions, either for Cline, Claude or Cursor, or any other MCP client. You should copy and paste these rules. For reference, see [custom-instructions.md](custom-instructions.md) which contains these rules.
 
+## Web Interface
+
+The Memory Bank MCP Server includes a modern web interface that provides a user-friendly way to browse and search your memory bank content through a web browser. The web interface is built with Next.js and provides a responsive, accessible experience with both light and dark theme support.
+
+### Features
+
+- **Project Browser**: View all your memory bank projects in a clean, searchable interface
+- **File Explorer**: Browse files within each project with sorting and filtering capabilities
+- **Markdown Renderer**: Full markdown support with syntax highlighting for code blocks
+- **Full-Text Search**: Search within project files with context and match highlighting
+- **Theme Support**: Toggle between light and dark themes with persistent preferences
+- **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
+- **Breadcrumb Navigation**: Easy navigation between projects, files, and search results
+
+### Installation and Setup
+
+1. **Navigate to the web interface directory:**
+   ```bash
+   cd web-ui
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure environment variables:**
+   Create a `.env.local` file in the `web-ui` directory:
+   ```bash
+   # Memory Bank Configuration
+   MEMORY_BANK_ROOT=/path/to/your/memory-bank
+   
+   # Application Configuration  
+   PORT=3000
+   NODE_ENV=development
+   ```
+
+4. **Start the development server:**
+   ```bash
+   npm start
+   ```
+
+5. **Access the web interface:**
+   Open your browser and navigate to `http://localhost:3000`
+
+### Available Scripts
+
+The web interface includes several npm scripts for development and production:
+
+- `npm start` - Start development server (Next.js with Turbopack)
+- `npm run build` - Build production bundle
+- `npm run serve` - Serve production build locally
+- `npm test` - Run unit tests
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Run tests with coverage report
+- `npm run e2e` - Run end-to-end tests
+- `npm run e2e:ui` - Run E2E tests with UI
+- `npm run lint` - Run ESLint
+
+### API Endpoints
+
+The web interface provides RESTful API endpoints that reuse the existing MCP server infrastructure:
+
+- `GET /api/projects` - List all projects
+- `GET /api/projects/:id` - Get project details and file list
+- `GET /api/projects/:id/files/:path` - Get file content
+- `GET /api/projects/:id/search?q=term` - Search within project
+
+### Usage Guide
+
+#### Browsing Projects
+
+1. The main page displays all your memory bank projects
+2. Use the search bar to filter projects by name or description
+3. Click on any project card to view its contents
+
+#### Exploring Project Files
+
+1. From a project page, view all files in a sortable table
+2. Sort by name, size, or last modified date
+3. Click on any file to view its content
+4. Use the "Search in this project" button for full-text search
+
+#### Viewing Files
+
+1. Markdown files are rendered with syntax highlighting
+2. Regular text files are displayed in a formatted code block
+3. Use the copy button to copy file content to clipboard
+4. Navigate using breadcrumbs at the top
+
+#### Searching Content
+
+1. From any project page, click "Search in this project"
+2. Enter search terms and optionally enable case-sensitive search
+3. View results with context lines before and after matches
+4. Click on file names in results to view the full file
+
+#### Theme Switching
+
+1. Use the sun/moon icon in the header to toggle themes
+2. Your preference is automatically saved and restored
+3. The interface respects your system's dark mode preference by default
+
+### Testing
+
+The web interface includes comprehensive testing:
+
+**Unit Tests:**
+```bash
+npm test                    # Run all unit tests
+npm run test:watch          # Watch mode for development
+npm run test:coverage       # Generate coverage report
+```
+
+**End-to-End Tests:**
+```bash
+npm run e2e                 # Run E2E tests
+npm run e2e:ui              # Run with Playwright UI
+```
+
+**Test Coverage:**
+The test suite maintains 90%+ code coverage across:
+- React components and hooks
+- API route handlers
+- User interaction flows
+- Error handling scenarios
+- Responsive design behavior
+
+### Production Deployment
+
+1. **Build the application:**
+   ```bash
+   npm run build
+   ```
+
+2. **Start the production server:**
+   ```bash
+   npm run serve
+   ```
+
+3. **Environment Configuration:**
+   Set the `MEMORY_BANK_ROOT` environment variable to point to your memory bank directory.
+
+### Troubleshooting
+
+**Common Issues:**
+
+1. **"No projects found"**
+   - Verify `MEMORY_BANK_ROOT` points to the correct directory
+   - Ensure the directory contains project subdirectories
+   - Check file permissions
+
+2. **API errors**
+   - Confirm the memory bank directory is accessible
+   - Check that project directories contain files
+   - Verify environment variables are set correctly
+
+3. **Search not working**
+   - Ensure project files contain searchable content
+   - Try different search terms
+   - Check that files are readable
+
+**Performance Tips:**
+
+- Large projects (>1000 files) may take longer to load
+- Search performance depends on file sizes and content
+- Consider organizing projects by logical boundaries
+
+### Architecture
+
+The web interface is built with:
+
+- **Frontend**: Next.js 15 with React 19, TypeScript, and Tailwind CSS
+- **Backend**: Next.js API routes that reuse existing MCP server repositories
+- **Testing**: Vitest for unit tests, Playwright for E2E testing
+- **Styling**: Tailwind CSS with dark mode support
+- **Markdown**: React Markdown with GitHub Flavored Markdown and syntax highlighting
+
+The interface integrates seamlessly with the existing Memory Bank MCP Server infrastructure, reusing the same repository patterns and use cases to ensure consistency and reliability.
+
 ## Development
 
 Basic development commands:
