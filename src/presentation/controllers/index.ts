@@ -5,3 +5,5 @@ export * from "./list-projects/index.js";
 export * from "./read/index.js";
 export * from "./update/index.js";
 export * from "./write/index.js";
+export * from "./list-prompts/index.js";
+export * from "./get-prompt/index.js";
