@@ -210,7 +210,6 @@ export default function FileViewPage() {
                   rehypePlugins={[rehypeHighlight, rehypeRaw]}
                   components={{
                     // Custom styling for code blocks
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     code({ inline, className, children, ...props }: any) {
                       return !inline ? (
                         <code
@@ -229,7 +228,6 @@ export default function FileViewPage() {
                       );
                     },
                     // Custom styling for links
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     a({ children, href, ...props }: any) {
                       return (
                         <a
@@ -244,7 +242,6 @@ export default function FileViewPage() {
                       );
                     },
                     // Custom styling for tables
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     table({ children, ...props }: any) {
                       return (
                         <div className="overflow-x-auto">
@@ -254,7 +251,6 @@ export default function FileViewPage() {
                         </div>
                       );
                     },
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     thead({ children, ...props }: any) {
                       return (
                         <thead className="bg-gray-50 dark:bg-gray-700" {...props}>
@@ -262,7 +258,6 @@ export default function FileViewPage() {
                         </thead>
                       );
                     },
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     th({ children, ...props }: any) {
                       return (
                         <th
@@ -273,7 +268,6 @@ export default function FileViewPage() {
                         </th>
                       );
                     },
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     td({ children, ...props }: any) {
                       return (
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100" {...props}>
