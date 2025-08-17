@@ -3,10 +3,11 @@ import { memoryBankService } from '@/lib/memory-bank';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const projectName = decodeURIComponent(params.id);
+    const resolvedParams = await params;
+    const projectName = decodeURIComponent(resolvedParams.id);
     
     // Get project info
     const allProjects = await memoryBankService.getProjects();

@@ -5,7 +5,12 @@ export default defineConfig({
     globals: true,
     environment: "node",
     include: ["**/*.spec.ts", "**/*.test.ts"],
-    exclude: ["**/node_modules/**", "**/dist/**"],
+    exclude: [
+      "**/node_modules/**", 
+      "**/dist/**",
+      "src/web-ui/**/*",
+      "**/e2e/**/*",
+    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],

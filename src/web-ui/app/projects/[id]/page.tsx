@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
@@ -32,11 +32,7 @@ export default function ProjectDetailPage() {
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
-  useEffect(() => {
-    fetchProjectDetails();
-  }, [projectId]);
-
-  const fetchProjectDetails = async () => {
+  const fetchProjectDetails = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -55,7 +51,11 @@ export default function ProjectDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId]);
+
+  useEffect(() => {
+    fetchProjectDetails();
+  }, [fetchProjectDetails]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -225,7 +225,7 @@ export default function ProjectDetailPage() {
                 No files found
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                This project doesn't contain any files yet.
+                This project doesn&apos;t contain any files yet.
               </p>
             </div>
           ) : (

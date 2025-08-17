@@ -20,11 +20,11 @@ export interface ReadRequest {
 
 export type ReadResponse = string;
 
-export {
+export type {
   Controller,
-  NotFoundError,
   ReadFileUseCase,
   Request,
   Response,
   Validator,
 };
+export { NotFoundError };

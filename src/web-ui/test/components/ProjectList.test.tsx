@@ -1,3 +1,4 @@
+import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { expect, test, describe } from 'vitest';
 import ProjectList from '@/components/ProjectList';
@@ -75,9 +76,9 @@ describe('ProjectList', () => {
   test('shows loading state correctly', () => {
     render(<ProjectList projects={[]} loading={true} />);
     
-    // Should show skeleton loaders
-    expect(screen.getAllByText('')).toHaveLength(0); // Skeleton divs don't have text
+    // Should show skeleton loaders instead of main content
     expect(screen.queryByText('Memory Bank Projects')).not.toBeInTheDocument();
+    expect(screen.queryByText('Projects (0)')).not.toBeInTheDocument();
   });
 
   test('shows empty state when no projects are available', () => {

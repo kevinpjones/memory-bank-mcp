@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
-import { SearchResponse, SearchResult } from '@/lib/memory-bank';
+import { SearchResponse } from '@/lib/memory-bank';
 import { 
   MagnifyingGlassIcon, 
   DocumentTextIcon,
@@ -27,15 +27,7 @@ export default function ProjectSearchPage() {
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
-  useEffect(() => {
-    const q = searchParams.get('q');
-    if (q) {
-      setQuery(q);
-      performSearch(q, searchParams.get('case') === 'true');
-    }
-  }, [searchParams]);
-
-  const performSearch = async (searchQuery: string, caseSensitiveSearch: boolean) => {
+  const performSearch = useCallback(async (searchQuery: string, caseSensitiveSearch: boolean) => {
     if (!searchQuery.trim()) return;
     
     try {
@@ -64,7 +56,15 @@ export default function ProjectSearchPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId]);
+
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q) {
+      setQuery(q);
+      performSearch(q, searchParams.get('case') === 'true');
+    }
+  }, [searchParams, performSearch]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Layout from '@/components/Layout';
-import ProjectList from '@/components/ProjectList';
+import dynamic from 'next/dynamic';
+
+const Layout = dynamic(() => import('@/components/Layout'), { ssr: false });
+const ProjectList = dynamic(() => import('@/components/ProjectList'), { ssr: false });
 import { ProjectInfo } from '@/lib/memory-bank';
 
 export default function Home() {

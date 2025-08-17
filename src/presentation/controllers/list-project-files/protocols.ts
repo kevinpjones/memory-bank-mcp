@@ -12,4 +12,4 @@ export interface ListProjectFilesRequest {
 
 export type ListProjectFilesResponse = string[];
 
-export { Controller, ListProjectFilesUseCase, Request, Response, Validator };
+export type { Controller, ListProjectFilesUseCase, Request, Response, Validator };

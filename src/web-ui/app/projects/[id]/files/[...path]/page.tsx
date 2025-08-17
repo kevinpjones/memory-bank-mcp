@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Layout from '@/components/Layout';
-import { FileInfo, ProjectInfo } from '@/lib/memory-bank';
+import { FileInfo } from '@/lib/memory-bank';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -27,7 +27,7 @@ interface FileViewResponse {
 export default function FileViewPage() {
   const params = useParams();
   const projectId = params.id as string;
-  const filePath = Array.isArray(params.path) ? params.path.join('/') : params.path;
+  const filePath = Array.isArray(params.path) ? params.path.join('/') : (params.path || '');
   
   const projectName = decodeURIComponent(projectId);
   const fileName = decodeURIComponent(filePath);
@@ -37,11 +37,7 @@ export default function FileViewPage() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    fetchFileContent();
-  }, [projectId, filePath]);
-
-  const fetchFileContent = async () => {
+  const fetchFileContent = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -62,7 +58,11 @@ export default function FileViewPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId, filePath]);
+
+  useEffect(() => {
+    fetchFileContent();
+  }, [fetchFileContent]);
 
   const handleCopyContent = async () => {
     if (!data?.content) return;
@@ -210,8 +210,8 @@ export default function FileViewPage() {
                   rehypePlugins={[rehypeHighlight, rehypeRaw]}
                   components={{
                     // Custom styling for code blocks
-                    code({ node, inline, className, children, ...props }: any) {
-                      const match = /language-(\w+)/.exec(className || '');
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    code({ inline, className, children, ...props }: any) {
                       return !inline ? (
                         <code
                           className={`${className} block p-4 rounded-lg bg-gray-900 text-gray-100 overflow-x-auto`}
@@ -229,6 +229,7 @@ export default function FileViewPage() {
                       );
                     },
                     // Custom styling for links
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     a({ children, href, ...props }: any) {
                       return (
                         <a
@@ -243,6 +244,7 @@ export default function FileViewPage() {
                       );
                     },
                     // Custom styling for tables
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     table({ children, ...props }: any) {
                       return (
                         <div className="overflow-x-auto">
@@ -252,6 +254,7 @@ export default function FileViewPage() {
                         </div>
                       );
                     },
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     thead({ children, ...props }: any) {
                       return (
                         <thead className="bg-gray-50 dark:bg-gray-700" {...props}>
@@ -259,6 +262,7 @@ export default function FileViewPage() {
                         </thead>
                       );
                     },
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     th({ children, ...props }: any) {
                       return (
                         <th
@@ -269,6 +273,7 @@ export default function FileViewPage() {
                         </th>
                       );
                     },
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     td({ children, ...props }: any) {
                       return (
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100" {...props}>

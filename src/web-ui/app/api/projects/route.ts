@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { memoryBankService } from '@/lib/memory-bank';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const projects = await memoryBankService.getProjects();
     

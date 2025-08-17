@@ -3,11 +3,12 @@ import { memoryBankService } from '@/lib/memory-bank';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; path: string[] } }
+  { params }: { params: Promise<{ id: string; path: string[] }> }
 ) {
   try {
-    const projectName = decodeURIComponent(params.id);
-    const filePath = params.path.map(segment => decodeURIComponent(segment)).join('/');
+    const resolvedParams = await params;
+    const projectName = decodeURIComponent(resolvedParams.id);
+    const filePath = resolvedParams.path.map(segment => decodeURIComponent(segment)).join('/');
     
     // Validate project exists
     const allProjects = await memoryBankService.getProjects();

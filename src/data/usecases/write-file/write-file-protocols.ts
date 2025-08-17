@@ -4,4 +4,4 @@ import {
 } from "../../../domain/usecases/index.js";
 import { FileRepository, ProjectRepository } from "../../protocols/index.js";
 
-export { FileRepository, ProjectRepository, WriteFileParams, WriteFileUseCase };
+export type { FileRepository, ProjectRepository, WriteFileParams, WriteFileUseCase };

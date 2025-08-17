@@ -1,13 +1,13 @@
 import path from 'path';
-import { FsProjectRepository } from '../../src/infra/filesystem/repositories/fs-project-repository.js';
-import { FsFileRepository } from '../../src/infra/filesystem/repositories/fs-file-repository.js';
-import { ListProjects } from '../../src/data/usecases/list-projects/list-projects.js';
-import { ListProjectFiles } from '../../src/data/usecases/list-project-files/list-project-files.js';
-import { ReadFile } from '../../src/data/usecases/read-file/read-file.js';
+import { FsProjectRepository } from '../../infra/filesystem/repositories/fs-project-repository.js';
+import { FsFileRepository } from '../../infra/filesystem/repositories/fs-file-repository.js';
+import { ListProjects } from '../../data/usecases/list-projects/list-projects.js';
+import { ListProjectFiles } from '../../data/usecases/list-project-files/list-project-files.js';
+import { ReadFile } from '../../data/usecases/read-file/read-file.js';
 
 // Environment configuration
 export const config = {
-  memoryBankRoot: process.env.MEMORY_BANK_ROOT || path.join(process.cwd(), '..', 'test-memory-bank'),
+  memoryBankRoot: process.env.MEMORY_BANK_ROOT || path.join(process.cwd(), 'test-memory-bank'),
   port: process.env.PORT || 3000,
 };
 
@@ -17,8 +17,8 @@ const fileRepository = new FsFileRepository(config.memoryBankRoot);
 
 // Initialize use cases
 export const listProjectsUseCase = new ListProjects(projectRepository);
-export const listProjectFilesUseCase = new ListProjectFiles(fileRepository);
-export const readFileUseCase = new ReadFile(fileRepository);
+export const listProjectFilesUseCase = new ListProjectFiles(fileRepository, projectRepository);
+export const readFileUseCase = new ReadFile(fileRepository, projectRepository);
 
 // Additional interfaces for the web UI
 export interface ProjectInfo {
@@ -85,7 +85,7 @@ export class MemoryBankService {
   }
   
   async getProjectFiles(projectName: string): Promise<FileInfo[]> {
-    const fileNames = await listProjectFilesUseCase.listFiles(projectName);
+    const fileNames = await listProjectFilesUseCase.listProjectFiles({ projectName });
     const files: FileInfo[] = [];
     
     for (const fileName of fileNames) {
@@ -109,7 +109,7 @@ export class MemoryBankService {
   }
   
   async getFileContent(projectName: string, fileName: string): Promise<string | null> {
-    return await readFileUseCase.readFile(projectName, fileName);
+    return await readFileUseCase.readFile({ projectName, fileName });
   }
   
   private async getProjectDescription(projectName: string): Promise<string | undefined> {
@@ -129,7 +129,7 @@ export class MemoryBankService {
         const firstParagraph = lines.find(line => line.trim() && !line.startsWith('#'));
         return firstParagraph?.trim().substring(0, 200);
       }
-    } catch (error) {
+    } catch {
       // Ignore errors when trying to read description files
     }
     return undefined;
