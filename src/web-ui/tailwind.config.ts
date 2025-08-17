@@ -15,27 +15,70 @@ export default {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
-      typography: {
+      typography: (theme: any) => ({
         DEFAULT: {
           css: {
             maxWidth: 'none',
-            color: 'inherit',
+            color: theme('colors.gray.700'),
+            h1: {
+              color: theme('colors.gray.900'),
+              fontWeight: '800',
+              fontSize: theme('fontSize.3xl')[0],
+              marginTop: theme('spacing.8'),
+              marginBottom: theme('spacing.4'),
+            },
+            h2: {
+              color: theme('colors.gray.900'),
+              fontWeight: '700',
+              fontSize: theme('fontSize.2xl')[0],
+              marginTop: theme('spacing.6'),
+              marginBottom: theme('spacing.3'),
+            },
+            h3: {
+              color: theme('colors.gray.900'),
+              fontWeight: '600',
+              fontSize: theme('fontSize.xl')[0],
+              marginTop: theme('spacing.5'),
+              marginBottom: theme('spacing.2'),
+            },
+            h4: {
+              color: theme('colors.gray.900'),
+              fontWeight: '600',
+              fontSize: theme('fontSize.lg')[0],
+              marginTop: theme('spacing.4'),
+              marginBottom: theme('spacing.2'),
+            },
+            h5: {
+              color: theme('colors.gray.900'),
+              fontWeight: '600',
+              marginTop: theme('spacing.4'),
+              marginBottom: theme('spacing.2'),
+            },
+            h6: {
+              color: theme('colors.gray.900'),
+              fontWeight: '600',
+              marginTop: theme('spacing.4'),
+              marginBottom: theme('spacing.2'),
+            },
             a: {
-              color: 'inherit',
+              color: theme('colors.blue.600'),
               textDecoration: 'underline',
               fontWeight: '500',
+              '&:hover': {
+                color: theme('colors.blue.800'),
+              },
             },
             strong: {
-              color: 'inherit',
+              color: theme('colors.gray.900'),
               fontWeight: '600',
             },
             code: {
-              color: 'inherit',
-              backgroundColor: 'rgba(0, 0, 0, 0.1)',
+              color: theme('colors.gray.900'),
+              backgroundColor: theme('colors.gray.100'),
               padding: '0.25rem 0.375rem',
               borderRadius: '0.25rem',
               fontSize: '0.875em',
-              fontWeight: '400',
+              fontWeight: '500',
             },
             'code::before': {
               content: '""',
@@ -44,8 +87,8 @@ export default {
               content: '""',
             },
             pre: {
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              color: '#fff',
+              backgroundColor: theme('colors.gray.900'),
+              color: theme('colors.gray.100'),
               padding: '1rem',
               borderRadius: '0.5rem',
               overflow: 'auto',
@@ -55,18 +98,70 @@ export default {
               color: 'inherit',
               padding: '0',
               fontSize: 'inherit',
+              fontWeight: 'inherit',
+            },
+            blockquote: {
+              borderLeftColor: theme('colors.gray.300'),
+              borderLeftWidth: '4px',
+              paddingLeft: theme('spacing.4'),
+              fontStyle: 'italic',
+              color: theme('colors.gray.600'),
+            },
+            ul: {
+              listStyleType: 'disc',
+              paddingLeft: theme('spacing.6'),
+            },
+            ol: {
+              listStyleType: 'decimal',
+              paddingLeft: theme('spacing.6'),
+            },
+            li: {
+              marginTop: theme('spacing.1'),
+              marginBottom: theme('spacing.1'),
             },
           },
         },
-        dark: {
+        invert: {
           css: {
-            color: 'inherit',
+            color: theme('colors.gray.300'),
+            h1: {
+              color: theme('colors.white'),
+            },
+            h2: {
+              color: theme('colors.white'),
+            },
+            h3: {
+              color: theme('colors.white'),
+            },
+            h4: {
+              color: theme('colors.white'),
+            },
+            h5: {
+              color: theme('colors.white'),
+            },
+            h6: {
+              color: theme('colors.white'),
+            },
+            a: {
+              color: theme('colors.blue.400'),
+              '&:hover': {
+                color: theme('colors.blue.300'),
+              },
+            },
+            strong: {
+              color: theme('colors.white'),
+            },
             code: {
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              color: theme('colors.gray.100'),
+              backgroundColor: theme('colors.gray.800'),
+            },
+            blockquote: {
+              borderLeftColor: theme('colors.gray.600'),
+              color: theme('colors.gray.400'),
             },
           },
         },
-      },
+      }),
     },
   },
   plugins: [
