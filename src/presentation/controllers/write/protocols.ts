@@ -14,4 +14,4 @@ export interface WriteRequest {
 
 export type WriteResponse = string;
 
-export { Controller, Request, Response, Validator, WriteFileUseCase };
+export type { Controller, Request, Response, Validator, WriteFileUseCase };

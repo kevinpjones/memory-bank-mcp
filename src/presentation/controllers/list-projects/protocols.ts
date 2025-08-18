@@ -3,4 +3,4 @@ import { Controller, Response } from "../../protocols/index.js";
 
 export type ListProjectsResponse = string[];
 
-export { Controller, ListProjectsUseCase, Response };
+export type { Controller, ListProjectsUseCase, Response };
