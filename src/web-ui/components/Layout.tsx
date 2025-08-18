@@ -2,8 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTheme } from '@/contexts/ThemeContext';
-import { MoonIcon, SunIcon, FolderIcon } from '@heroicons/react/24/outline';
+import { MoonIcon, SunIcon, FolderIcon, DocumentTextIcon, CommandLineIcon } from '@heroicons/react/24/outline';
 
 interface BreadcrumbItem {
   label: string;
@@ -17,6 +18,15 @@ interface LayoutProps {
 
 export default function Layout({ children, breadcrumbs }: LayoutProps) {
   const { theme, toggleTheme } = useTheme();
+  const router = useRouter();
+  
+  // Simple way to determine which section we're in based on the current path
+  const getCurrentSection = () => {
+    if (typeof window === 'undefined') return 'projects';
+    const path = window.location.pathname;
+    if (path.startsWith('/prompts')) return 'prompts';
+    return 'projects';
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
@@ -92,6 +102,36 @@ export default function Layout({ children, breadcrumbs }: LayoutProps) {
           )}
         </div>
       </header>
+
+      {/* Navigation */}
+      <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex space-x-8">
+            <Link
+              href="/"
+              className={`flex items-center space-x-2 py-4 border-b-2 text-sm font-medium transition-colors ${
+                getCurrentSection() === 'projects'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+              }`}
+            >
+              <FolderIcon className="w-5 h-5" />
+              <span>Projects</span>
+            </Link>
+            <Link
+              href="/prompts"
+              className={`flex items-center space-x-2 py-4 border-b-2 text-sm font-medium transition-colors ${
+                getCurrentSection() === 'prompts'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+              }`}
+            >
+              <CommandLineIcon className="w-5 h-5" />
+              <span>Prompts</span>
+            </Link>
+          </div>
+        </div>
+      </nav>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
