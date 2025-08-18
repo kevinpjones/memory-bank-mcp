@@ -266,9 +266,12 @@ export default function FileViewPage() {
                         {children}
                       </blockquote>
                     ),
-                    code: ({ inline, children, ...props }: any) => {
-                      return inline ? (
-                        <code className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+                    code: ({ inline, className, children, ...props }: any) => {
+                      // More robust inline detection
+                      const isInline = inline !== false && !className?.includes('language-');
+                      
+                      return isInline ? (
+                        <code className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-1.5 py-0.5 rounded text-sm font-mono inline" {...props}>
                           {children}
                         </code>
                       ) : (

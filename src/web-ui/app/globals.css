@@ -112,6 +112,12 @@ body {
   font-weight: 500;
 }
 
+/* Ensure inline code elements stay inline */
+.prose code.inline {
+  display: inline;
+  white-space: nowrap;
+}
+
 .prose pre {
   background-color: rgb(17 24 39);
   color: rgb(243 244 246);
@@ -172,6 +178,12 @@ body {
 .dark .prose code {
   background-color: rgb(31 41 55);
   color: rgb(243 244 246);
+}
+
+/* Ensure inline code elements stay inline in dark mode too */
+.dark .prose code.inline {
+  display: inline;
+  white-space: nowrap;
 }
 
 .dark .prose blockquote {
