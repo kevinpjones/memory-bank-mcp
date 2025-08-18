@@ -233,8 +233,13 @@ export class MemoryBankService {
         try {
           const promptPath = path.join(config.memoryBankRoot, '.prompts', `${prompt.name}.md`);
           const stats = await import('fs').then(fs => fs.promises.stat(promptPath));
-          lastModified = stats.mtime;
+          lastModified = stats.mtime instanceof Date ? stats.mtime : new Date(stats.mtime);
           size = stats.size;
+          
+          // Validate the date
+          if (isNaN(lastModified.getTime())) {
+            lastModified = undefined;
+          }
         } catch {
           // Ignore file stats errors
         }
@@ -273,8 +278,13 @@ export class MemoryBankService {
       try {
         const promptPath = path.join(config.memoryBankRoot, '.prompts', `${name}.md`);
         const stats = await import('fs').then(fs => fs.promises.stat(promptPath));
-        lastModified = stats.mtime;
+        lastModified = stats.mtime instanceof Date ? stats.mtime : new Date(stats.mtime);
         size = stats.size;
+        
+        // Validate the date
+        if (isNaN(lastModified.getTime())) {
+          lastModified = undefined;
+        }
       } catch {
         // Ignore file stats errors
       }

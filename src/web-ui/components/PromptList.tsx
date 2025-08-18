@@ -40,13 +40,20 @@ export default function PromptList({ prompts, loading }: PromptListProps) {
 
   const formatDate = (date: Date | undefined) => {
     if (!date) return 'Unknown';
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
+    try {
+      const dateObj = date instanceof Date ? date : new Date(date);
+      if (isNaN(dateObj.getTime())) return 'Unknown';
+      
+      return new Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(dateObj);
+    } catch {
+      return 'Unknown';
+    }
   };
 
   const formatSize = (bytes: number | undefined) => {
