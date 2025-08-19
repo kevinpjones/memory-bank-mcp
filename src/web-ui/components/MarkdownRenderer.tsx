@@ -48,17 +48,17 @@ export default function MarkdownRenderer({ children, className = 'prose prose-gr
             </a>
           ),
           ul: ({ children, ...props }) => (
-            <ul className="list-disc list-inside space-y-1 my-4" {...props}>
+            <ul className="list-disc list-outside ml-6 space-y-1 my-4" {...props}>
               {children}
             </ul>
           ),
           ol: ({ children, ...props }) => (
-            <ol className="list-decimal list-inside space-y-1 my-4" {...props}>
+            <ol className="list-decimal list-outside ml-6 space-y-1 my-4" {...props}>
               {children}
             </ol>
           ),
           li: ({ children, ...props }) => (
-            <li className="mb-1" {...props}>
+            <li className="mb-1 pl-1" {...props}>
               {children}
             </li>
           ),
