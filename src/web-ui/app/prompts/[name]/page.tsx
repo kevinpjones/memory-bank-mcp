@@ -4,10 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeHighlight from 'rehype-highlight';
-import 'highlight.js/styles/github-dark.css';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
 
 const Layout = dynamic(() => import('@/components/Layout'), { ssr: false });
 import { PromptInfo, PromptArgument } from '@/lib/memory-bank';
@@ -246,14 +243,9 @@ export default function PromptViewPage() {
             </h2>
           </div>
           <div className="p-6">
-            <div className="prose prose-gray dark:prose-invert max-w-none">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeHighlight]}
-              >
-                {prompt.template}
-              </ReactMarkdown>
-            </div>
+            <MarkdownRenderer>
+              {prompt.template}
+            </MarkdownRenderer>
           </div>
         </div>
       </div>
