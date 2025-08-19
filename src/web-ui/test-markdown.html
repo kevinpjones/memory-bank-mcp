@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Markdown Test</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/react-markdown@8.0.7/react-markdown.min.js"></script>
+    <script src="https://unpkg.com/remark-gfm@3.0.1/index.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState } = React;
+        
+        const testMarkdown = `## Review Workflow
+
+1. **Context Intake**
+   
+   • Review the change description and understand the goal of the change
+   • Identify the change scope (diff, commit list, or directory)
+   • Read surrounding code to understand intent and style
+   • Gather test status and coverage reports if present
+
+2. **Automated Pass (quick)**
+   
+   • Look for TODO/FIXME, debug prints, hard-coded secrets
+   • Check for obvious linting issues
+
+3. **Deep Analysis**
+   
+   • Line-by-line inspection
+   • Check **security**, **performance**, **error handling**, **readability**, **tests**, **docs**
+   • Note violations of SOLID, DRY, KISS, least-privilege, etc.
+   • Confirm new APIs follow existing conventions
+
+4. **Severity & Delegation**
+   
+   • 🔴 **Critical** – must fix now
+   • 🟡 **Major** – should fix soon
+   • 🟢 **Minor** – style / docs
+
+5. **Compose Report** using the required format below`;
+
+        function MarkdownRenderer() {
+            return React.createElement('div', {className: 'prose prose-gray dark:prose-invert max-w-none p-8'}, 
+                React.createElement(ReactMarkdown, {
+                    children: testMarkdown,
+                    remarkPlugins: [remarkGfm],
+                    components: {
+                        ul: ({ children, node, ...props }) => {
+                            const isNested = node?.parent?.tagName === 'li';
+                            const baseClasses = "list-disc list-outside space-y-1";
+                            const spacingClasses = isNested ? "ml-4 my-1" : "ml-6 my-4";
+                            
+                            return React.createElement('ul', {
+                                className: `${baseClasses} ${spacingClasses}`,
+                                ...props
+                            }, children);
+                        },
+                        ol: ({ children, node, ...props }) => {
+                            const isNested = node?.parent?.tagName === 'li';
+                            const baseClasses = "list-decimal list-outside space-y-1";
+                            const spacingClasses = isNested ? "ml-4 my-1" : "ml-6 my-4";
+                            
+                            return React.createElement('ol', {
+                                className: `${baseClasses} ${spacingClasses}`,
+                                ...props
+                            }, children);
+                        },
+                        li: ({ children, node, ...props }) => {
+                            const hasNestedList = node?.children?.some(child => 
+                                child.tagName === 'ul' || child.tagName === 'ol'
+                            );
+                            
+                            return React.createElement('li', {
+                                className: `mb-1 pl-1 ${hasNestedList ? 'space-y-1' : ''}`,
+                                ...props
+                            }, children);
+                        }
+                    }
+                })
+            );
+        }
+
+        ReactDOM.render(React.createElement(MarkdownRenderer), document.getElementById('root'));
+    </script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</body>
+</html>
