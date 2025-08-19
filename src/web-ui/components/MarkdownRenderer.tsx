@@ -47,21 +47,42 @@ export default function MarkdownRenderer({ children, className = 'prose prose-gr
               {children}
             </a>
           ),
-          ul: ({ children, ...props }) => (
-            <ul className="list-disc list-outside ml-6 space-y-1 my-4" {...props}>
-              {children}
-            </ul>
-          ),
-          ol: ({ children, ...props }) => (
-            <ol className="list-decimal list-outside ml-6 space-y-1 my-4" {...props}>
-              {children}
-            </ol>
-          ),
-          li: ({ children, ...props }) => (
-            <li className="mb-1 pl-1" {...props}>
-              {children}
-            </li>
-          ),
+          ul: ({ children, node, ...props }: any) => {
+            // Check if this ul is nested inside another list item
+            const isNested = node?.parent?.tagName === 'li';
+            const baseClasses = "list-disc list-outside space-y-1";
+            const spacingClasses = isNested ? "ml-4 my-1" : "ml-6 my-4";
+            
+            return (
+              <ul className={`${baseClasses} ${spacingClasses}`} {...props}>
+                {children}
+              </ul>
+            );
+          },
+          ol: ({ children, node, ...props }: any) => {
+            // Check if this ol is nested inside another list item
+            const isNested = node?.parent?.tagName === 'li';
+            const baseClasses = "list-decimal list-outside space-y-1";
+            const spacingClasses = isNested ? "ml-4 my-1" : "ml-6 my-4";
+            
+            return (
+              <ol className={`${baseClasses} ${spacingClasses}`} {...props}>
+                {children}
+              </ol>
+            );
+          },
+          li: ({ children, node, ...props }: any) => {
+            // Check if this li contains nested lists
+            const hasNestedList = node?.children?.some((child: any) => 
+              child.tagName === 'ul' || child.tagName === 'ol'
+            );
+            
+            return (
+              <li className={`mb-1 pl-1 ${hasNestedList ? 'space-y-1' : ''}`} {...props}>
+                {children}
+              </li>
+            );
+          },
         }}
       >
         {children}
