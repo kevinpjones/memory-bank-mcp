@@ -85,12 +85,25 @@ export class MemoryBankService {
     for (const name of projectNames) {
       try {
         const files = await this.getProjectFiles(name);
-        const projectPath = path.join(config.memoryBankRoot, name);
-        const stats = await import('fs').then(fs => fs.promises.stat(projectPath));
+        
+        // Find the most recent file modification date within the project
+        let mostRecentModification = new Date(0); // Start with epoch
+        for (const file of files) {
+          if (file.lastModified > mostRecentModification) {
+            mostRecentModification = file.lastModified;
+          }
+        }
+        
+        // If no files exist, fall back to project directory modification time
+        if (files.length === 0) {
+          const projectPath = path.join(config.memoryBankRoot, name);
+          const stats = await import('fs').then(fs => fs.promises.stat(projectPath));
+          mostRecentModification = stats.mtime instanceof Date ? stats.mtime : new Date(stats.mtime);
+        }
         
         projects.push({
           name,
-          lastModified: stats.mtime,
+          lastModified: mostRecentModification,
           fileCount: files.length,
           description: await this.getProjectDescription(name),
         });
@@ -104,7 +117,8 @@ export class MemoryBankService {
       }
     }
     
-    return projects;
+    // Sort projects by last modification date in reverse chronological order (most recent first)
+    return projects.sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime());
   }
   
   async getProjectFiles(projectName: string): Promise<FileInfo[]> {
