@@ -248,7 +248,7 @@ export default function ProjectList({ projects, loading, onProjectArchived }: Pr
                             transition-all duration-200 group-hover:-translate-y-1 p-6">
                 {/* Project Header */}
                 <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="flex items-start gap-2 flex-1 min-w-0">
                     <button
                       onClick={(e) => handleCopyTitle(project.name, e)}
                       className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 
