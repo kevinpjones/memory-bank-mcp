@@ -426,3 +426,173 @@ describe('Date formatting utilities', () => {
     expect(result).toMatch(/Dec \d+, 2023/);
   });
 });
+
+// MemoryBankService projects functionality tests
+describe('MemoryBankService - Projects Functionality', () => {
+  let service: MemoryBankService;
+  let mockListProjectsUseCase: any;
+  let mockListProjectFilesUseCase: any;
+  let mockFsPromises: any;
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    
+    // Mock the file system
+    const fs = await import('fs');
+    mockFsPromises = fs.promises as any;
+    
+    service = new MemoryBankService();
+    
+    // Create mock use cases
+    mockListProjectsUseCase = {
+      listProjects: vi.fn(),
+    };
+    
+    mockListProjectFilesUseCase = {
+      listProjectFiles: vi.fn(),
+    };
+    
+    // Set up mocks on service instance
+    Object.defineProperty(service, 'listProjectsUseCase', {
+      value: mockListProjectsUseCase,
+      writable: true
+    });
+    Object.defineProperty(service, 'listProjectFilesUseCase', {
+      value: mockListProjectFilesUseCase,
+      writable: true
+    });
+    
+    // Mock getProjectDescription method
+    vi.spyOn(service as any, 'getProjectDescription').mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
+
+  describe('getProjects', () => {
+    it('should sort projects by most recent file modification date', async () => {
+      // Arrange
+      const now = new Date();
+      const oldDate = new Date(now.getTime() - 86400000); // 1 day ago
+      const newerDate = new Date(now.getTime() - 43200000); // 12 hours ago
+      
+      mockListProjectsUseCase.listProjects.mockResolvedValue([
+        'old-project',
+        'newer-project',
+        'newest-project'
+      ]);
+      
+      // Mock file listings
+      mockListProjectFilesUseCase.listProjectFiles.mockImplementation(({ projectName }: { projectName: string }) => {
+        if (projectName === 'old-project') {
+          return Promise.resolve(['old-file.md']);
+        }
+        if (projectName === 'newer-project') {
+          return Promise.resolve(['newer-file.md']);
+        }
+        if (projectName === 'newest-project') {
+          return Promise.resolve(['newest-file.md']);
+        }
+        return Promise.resolve([]);
+      });
+      
+      // Mock file stats
+      mockFsPromises.stat.mockImplementation((filePath: string) => {
+        if (filePath.includes('old-file.md')) {
+          return Promise.resolve({ size: 100, mtime: oldDate });
+        }
+        if (filePath.includes('newer-file.md')) {
+          return Promise.resolve({ size: 200, mtime: newerDate });
+        }
+        if (filePath.includes('newest-file.md')) {
+          return Promise.resolve({ size: 300, mtime: now });
+        }
+        return Promise.resolve({ size: 0, mtime: oldDate });
+      });
+
+      // Act
+      const result = await service.getProjects();
+
+      // Assert
+      expect(result).toHaveLength(3);
+      expect(result[0].name).toBe('newest-project');
+      expect(result[1].name).toBe('newer-project');
+      expect(result[2].name).toBe('old-project');
+    });
+
+    it('should use most recent file modification date within each project', async () => {
+      // Arrange
+      const baseDate = new Date('2024-01-01');
+      const recentDate = new Date('2024-01-10');
+      
+      mockListProjectsUseCase.listProjects.mockResolvedValue(['test-project']);
+      
+      mockListProjectFilesUseCase.listProjectFiles.mockResolvedValue([
+        'old-file.md',
+        'recent-file.md'
+      ]);
+      
+      mockFsPromises.stat.mockImplementation((filePath: string) => {
+        if (filePath.includes('old-file.md')) {
+          return Promise.resolve({ size: 100, mtime: baseDate });
+        }
+        if (filePath.includes('recent-file.md')) {
+          return Promise.resolve({ size: 200, mtime: recentDate });
+        }
+        return Promise.resolve({ size: 0, mtime: baseDate });
+      });
+
+      // Act
+      const result = await service.getProjects();
+
+      // Assert
+      expect(result).toHaveLength(1);
+      expect(result[0].lastModified).toEqual(recentDate);
+    });
+
+    it('should fallback to project directory mtime when no files exist', async () => {
+      // Arrange
+      const projectDirDate = new Date('2024-01-05');
+      
+      mockListProjectsUseCase.listProjects.mockResolvedValue(['empty-project']);
+      
+      mockListProjectFilesUseCase.listProjectFiles.mockResolvedValue([]);
+      
+      mockFsPromises.stat.mockResolvedValue({ mtime: projectDirDate });
+
+      // Act  
+      const result = await service.getProjects();
+
+      // Assert
+      expect(result).toHaveLength(1);
+      expect(result[0].lastModified).toEqual(projectDirDate);
+    });
+
+    it('should handle projects with errors gracefully', async () => {
+      // Arrange
+      mockListProjectsUseCase.listProjects.mockResolvedValue([
+        'working-project',
+        'error-project'
+      ]);
+      
+      mockListProjectFilesUseCase.listProjectFiles.mockImplementation(({ projectName }: { projectName: string }) => {
+        if (projectName === 'working-project') {
+          return Promise.resolve(['file.md']);
+        }
+        throw new Error('Project access denied');
+      });
+      
+      mockFsPromises.stat.mockResolvedValue({ size: 100, mtime: new Date() });
+
+      // Act
+      const result = await service.getProjects();
+
+      // Assert
+      expect(result).toHaveLength(2);
+      expect(result.find(p => p.name === 'working-project')).toBeDefined();
+      expect(result.find(p => p.name === 'error-project')).toBeDefined();
+      expect(result.find(p => p.name === 'error-project')?.fileCount).toBe(0);
+    });
+  });
+});

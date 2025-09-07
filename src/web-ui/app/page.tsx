@@ -57,7 +57,7 @@ export default function Home() {
           </div>
         </div>
       ) : (
-        <ProjectList projects={projects} loading={loading} />
+        <ProjectList projects={projects} loading={loading} onProjectArchived={fetchProjects} />
       )}
     </Layout>
   );
