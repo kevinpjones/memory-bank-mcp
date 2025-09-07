@@ -248,12 +248,7 @@ export default function ProjectList({ projects, loading, onProjectArchived }: Pr
                             transition-all duration-200 group-hover:-translate-y-1 p-6">
                 {/* Project Header */}
                 <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white 
-                                 group-hover:text-blue-600 dark:group-hover:text-blue-400 
-                                 transition-colors line-clamp-2">
-                      {project.name}
-                    </h3>
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
                     <button
                       onClick={(e) => handleCopyTitle(project.name, e)}
                       className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 
@@ -268,6 +263,11 @@ export default function ProjectList({ projects, loading, onProjectArchived }: Pr
                         <ClipboardIcon className="w-4 h-4" />
                       )}
                     </button>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white 
+                                 group-hover:text-blue-600 dark:group-hover:text-blue-400 
+                                 transition-colors line-clamp-2 flex-1">
+                      {project.name}
+                    </h3>
                   </div>
                   <DocumentTextIcon className="w-5 h-5 text-gray-400 group-hover:text-blue-500 
                                              transition-colors flex-shrink-0 ml-2" />
