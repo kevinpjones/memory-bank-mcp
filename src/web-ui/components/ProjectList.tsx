@@ -257,7 +257,7 @@ export default function ProjectList({ projects, loading, onProjectArchived }: Pr
                     <button
                       onClick={(e) => handleCopyTitle(project.name, e)}
                       className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 
-                               transition-colors rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer"
+                               transition-colors rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer hover:cursor-pointer"
                       title={copiedProject === project.name ? 'Copied!' : 'Copy project name'}
                       aria-label={`Copy project name: ${project.name}`}
                     >
@@ -300,7 +300,8 @@ export default function ProjectList({ projects, loading, onProjectArchived }: Pr
                       setArchiveConfirm(project.name);
                     }}
                     className="flex-shrink-0 p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400 
-                             transition-colors rounded focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 cursor-pointer"
+                             transition-colors rounded focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 
+                             cursor-pointer hover:cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                     title="Archive project"
                     aria-label={`Archive project: ${project.name}`}
                     disabled={archiving === project.name}
