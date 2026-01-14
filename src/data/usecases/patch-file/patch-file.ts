@@ -54,9 +54,10 @@ export class PatchFile implements PatchFileUseCase {
     const extractedLines = lines.slice(startLine - 1, endLine);
     const extractedContent = extractedLines.join("\n");
 
-    // Normalize content for comparison (trim trailing newlines for flexibility)
-    const normalizedOldContent = oldContent.replace(/\n+$/, "");
-    const normalizedExtractedContent = extractedContent.replace(/\n+$/, "");
+    // Normalize content for comparison (trim at most one trailing newline for flexibility)
+    // Using /\n$/ instead of /\n+$/ to preserve distinction between empty lines
+    const normalizedOldContent = oldContent.replace(/\n$/, "");
+    const normalizedExtractedContent = extractedContent.replace(/\n$/, "");
 
     // Verify content matches
     if (normalizedExtractedContent !== normalizedOldContent) {
