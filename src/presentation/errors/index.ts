@@ -1,5 +1,7 @@
 export * from "./base-error.js";
+export * from "./content-mismatch-error.js";
 export * from "./error-names.js";
+export * from "./invalid-line-range-error.js";
 export * from "./invalid-param-error.js";
 export * from "./missing-param-error.js";
 export * from "./not-found-error.js";
