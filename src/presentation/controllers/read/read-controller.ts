@@ -1,4 +1,4 @@
-import { badRequest, notFound, ok, serverError } from "../../helpers/index.js";
+import { addLineNumbers, badRequest, notFound, ok, serverError } from "../../helpers/index.js";
 import {
   Controller,
   ReadFileUseCase,
@@ -22,7 +22,7 @@ export class ReadController implements Controller<ReadRequest, ReadResponse> {
         return badRequest(validationError);
       }
 
-      const { projectName, fileName } = request.body!;
+      const { projectName, fileName, includeLineNumbers = true } = request.body!;
 
       const content = await this.readFileUseCase.readFile({
         projectName,
@@ -33,7 +33,10 @@ export class ReadController implements Controller<ReadRequest, ReadResponse> {
         return notFound(fileName);
       }
 
-      return ok(content);
+      // Add line numbers if requested (default: true)
+      const responseContent = includeLineNumbers ? addLineNumbers(content) : content;
+
+      return ok(responseContent);
     } catch (error) {
       return serverError(error as Error);
     }

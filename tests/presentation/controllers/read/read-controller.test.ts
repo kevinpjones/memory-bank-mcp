@@ -100,7 +100,7 @@ describe("ReadController", () => {
     });
   });
 
-  it("should return 200 if valid data is provided", async () => {
+  it("should return 200 with line numbers by default", async () => {
     const { sut } = makeSut();
     const request = {
       body: {
@@ -109,9 +109,93 @@ describe("ReadController", () => {
       },
     };
     const response = await sut.handle(request);
-    expect(response).toEqual({
-      statusCode: 200,
-      body: "file content",
-    });
+    expect(response.statusCode).toBe(200);
+    // Default mock returns "file content" which becomes "1|file content"
+    expect(response.body).toBe("1|file content");
+  });
+
+  it("should return 200 with line numbers when includeLineNumbers is true", async () => {
+    const { sut } = makeSut();
+    const request = {
+      body: {
+        projectName: "any_project",
+        fileName: "any_file",
+        includeLineNumbers: true,
+      },
+    };
+    const response = await sut.handle(request);
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toBe("1|file content");
+  });
+
+  it("should return 200 without line numbers when includeLineNumbers is false", async () => {
+    const { sut } = makeSut();
+    const request = {
+      body: {
+        projectName: "any_project",
+        fileName: "any_file",
+        includeLineNumbers: false,
+      },
+    };
+    const response = await sut.handle(request);
+    expect(response.statusCode).toBe(200);
+    // Should return raw content without line numbers
+    expect(response.body).toBe("file content");
+  });
+
+  it("should add sequential 1-indexed line numbers to multi-line content", async () => {
+    const { sut, readFileUseCaseStub } = makeSut();
+    vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(
+      "first line\nsecond line\nthird line"
+    );
+    const request = {
+      body: {
+        projectName: "any_project",
+        fileName: "any_file",
+        includeLineNumbers: true,
+      },
+    };
+    const response = await sut.handle(request);
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toBe("1|first line\n2|second line\n3|third line");
+  });
+
+  it("should preserve empty lines when adding line numbers", async () => {
+    const { sut, readFileUseCaseStub } = makeSut();
+    vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(
+      "first\n\nthird"
+    );
+    const request = {
+      body: {
+        projectName: "any_project",
+        fileName: "any_file",
+        includeLineNumbers: true,
+      },
+    };
+    const response = await sut.handle(request);
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toBe("1|first\n2|\n3|third");
+  });
+
+  it("should handle large files with proper line number padding", async () => {
+    const { sut, readFileUseCaseStub } = makeSut();
+    const lines = Array.from({ length: 100 }, (_, i) => `line ${i + 1}`);
+    vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(
+      lines.join("\n")
+    );
+    const request = {
+      body: {
+        projectName: "any_project",
+        fileName: "any_file",
+        includeLineNumbers: true,
+      },
+    };
+    const response = await sut.handle(request);
+    expect(response.statusCode).toBe(200);
+    const resultLines = (response.body as string).split("\n");
+    // First line should be padded
+    expect(resultLines[0]).toBe("  1|line 1");
+    // Line 100 should not be padded
+    expect(resultLines[99]).toBe("100|line 100");
   });
 });

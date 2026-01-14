@@ -20,3 +20,5 @@ export const ok = (data: any): Response => ({
   statusCode: 200,
   body: data,
 });
+
+export { addLineNumbers, stripLineNumbers, hasLineNumbers } from "./line-numbers.js";

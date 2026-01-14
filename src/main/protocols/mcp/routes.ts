@@ -66,6 +66,11 @@ export default () => {
             type: "string",
             description: "The name of the file",
           },
+          includeLineNumbers: {
+            type: "boolean",
+            description: "Whether to include line numbers as metadata prefix in the returned content. When enabled, each line is prefixed with its 1-indexed line number followed by a pipe separator (e.g., '1|first line'). Useful for patch operations. Default: true",
+            default: true,
+          },
         },
         required: ["projectName", "fileName"],
       },
