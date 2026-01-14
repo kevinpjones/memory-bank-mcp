@@ -107,7 +107,7 @@ describe("PatchFile Use Case", () => {
   });
 
   describe("Line Range Validation", () => {
-    it("should return INVALID_LINE_RANGE if startLine is less than 1", async () => {
+    it("should return INVALID_LINE_RANGE with totalLines if startLine is less than 1", async () => {
       const { sut } = makeSut();
 
       const result = await sut.patchFile({
@@ -119,10 +119,12 @@ describe("PatchFile Use Case", () => {
         newContent: "new line 1",
       });
 
-      expect(result).toEqual({ success: false, error: "INVALID_LINE_RANGE" });
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("INVALID_LINE_RANGE");
+      expect(result.errorContext?.totalLines).toBe(5);
     });
 
-    it("should return INVALID_LINE_RANGE if endLine is less than startLine", async () => {
+    it("should return INVALID_LINE_RANGE with totalLines if endLine is less than startLine", async () => {
       const { sut } = makeSut();
 
       const result = await sut.patchFile({
@@ -134,10 +136,12 @@ describe("PatchFile Use Case", () => {
         newContent: "new line 2",
       });
 
-      expect(result).toEqual({ success: false, error: "INVALID_LINE_RANGE" });
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("INVALID_LINE_RANGE");
+      expect(result.errorContext?.totalLines).toBe(5);
     });
 
-    it("should return INVALID_LINE_RANGE if endLine exceeds total lines", async () => {
+    it("should return INVALID_LINE_RANGE with totalLines if endLine exceeds total lines", async () => {
       const { sut, fileRepositoryStub } = makeSut();
       vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce("line 1\nline 2\nline 3");
 
@@ -150,7 +154,9 @@ describe("PatchFile Use Case", () => {
         newContent: "new line 1",
       });
 
-      expect(result).toEqual({ success: false, error: "INVALID_LINE_RANGE" });
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("INVALID_LINE_RANGE");
+      expect(result.errorContext?.totalLines).toBe(3);
     });
 
     it("should accept valid line range at file boundaries", async () => {
@@ -171,7 +177,7 @@ describe("PatchFile Use Case", () => {
   });
 
   describe("Content Verification", () => {
-    it("should return CONTENT_MISMATCH if old content does not match", async () => {
+    it("should return CONTENT_MISMATCH with actualContent if old content does not match", async () => {
       const { sut, fileRepositoryStub } = makeSut();
       vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce("actual line 1\nline 2\nline 3");
 
@@ -184,7 +190,9 @@ describe("PatchFile Use Case", () => {
         newContent: "new line 1",
       });
 
-      expect(result).toEqual({ success: false, error: "CONTENT_MISMATCH" });
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("CONTENT_MISMATCH");
+      expect(result.errorContext?.actualContent).toBe("actual line 1");
     });
 
     it("should match content exactly for single line", async () => {

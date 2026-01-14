@@ -9,10 +9,18 @@ export interface PatchFileParams {
   newContent: string;
 }
 
+export interface PatchFileErrorContext {
+  /** Total lines in file (for INVALID_LINE_RANGE errors) */
+  totalLines?: number;
+  /** Actual content at the specified location (for CONTENT_MISMATCH errors) */
+  actualContent?: string;
+}
+
 export interface PatchFileResult {
   success: boolean;
   content?: File;
   error?: PatchFileError;
+  errorContext?: PatchFileErrorContext;
 }
 
 export type PatchFileError =

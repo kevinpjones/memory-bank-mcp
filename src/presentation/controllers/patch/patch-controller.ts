@@ -48,11 +48,18 @@ export class PatchController
             return notFound(fileName);
           case "INVALID_LINE_RANGE":
             return badRequest(
-              new InvalidLineRangeError(startLine, endLine, 0)
+              new InvalidLineRangeError(
+                startLine,
+                endLine,
+                result.errorContext?.totalLines ?? 0
+              )
             );
           case "CONTENT_MISMATCH":
             return badRequest(
-              new ContentMismatchError(oldContent, "actual content differs")
+              new ContentMismatchError(
+                oldContent,
+                result.errorContext?.actualContent ?? "unknown"
+              )
             );
           default:
             return notFound(fileName);

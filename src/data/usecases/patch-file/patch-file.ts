@@ -37,7 +37,11 @@ export class PatchFile implements PatchFileUseCase {
       endLine < startLine ||
       endLine > totalLines
     ) {
-      return { success: false, error: "INVALID_LINE_RANGE" };
+      return {
+        success: false,
+        error: "INVALID_LINE_RANGE",
+        errorContext: { totalLines },
+      };
     }
 
     // Extract the content at the specified line range (convert to 0-based)
@@ -50,7 +54,11 @@ export class PatchFile implements PatchFileUseCase {
 
     // Verify content matches
     if (normalizedExtractedContent !== normalizedOldContent) {
-      return { success: false, error: "CONTENT_MISMATCH" };
+      return {
+        success: false,
+        error: "CONTENT_MISMATCH",
+        errorContext: { actualContent: extractedContent },
+      };
     }
 
     // Apply the patch: replace the specified line range with new content

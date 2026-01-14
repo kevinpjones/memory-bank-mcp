@@ -101,28 +101,32 @@ describe("PatchController", () => {
       });
     });
 
-    it("should return 400 if PatchFileUseCase returns INVALID_LINE_RANGE", async () => {
+    it("should return 400 with correct totalLines if PatchFileUseCase returns INVALID_LINE_RANGE", async () => {
       const { sut, patchFileUseCaseStub } = makeSut();
       vi.spyOn(patchFileUseCaseStub, "patchFile").mockResolvedValueOnce({
         success: false,
         error: "INVALID_LINE_RANGE",
+        errorContext: { totalLines: 5 },
       });
       const request = makeValidRequest();
       const response = await sut.handle(request);
       expect(response.statusCode).toBe(400);
       expect(response.body).toBeInstanceOf(InvalidLineRangeError);
+      expect((response.body as Error).message).toContain("5 lines");
     });
 
-    it("should return 400 if PatchFileUseCase returns CONTENT_MISMATCH", async () => {
+    it("should return 400 with actual content if PatchFileUseCase returns CONTENT_MISMATCH", async () => {
       const { sut, patchFileUseCaseStub } = makeSut();
       vi.spyOn(patchFileUseCaseStub, "patchFile").mockResolvedValueOnce({
         success: false,
         error: "CONTENT_MISMATCH",
+        errorContext: { actualContent: "actual file content here" },
       });
       const request = makeValidRequest();
       const response = await sut.handle(request);
       expect(response.statusCode).toBe(400);
       expect(response.body).toBeInstanceOf(ContentMismatchError);
+      expect((response.body as Error).message).toContain("actual file content here");
     });
 
     it("should return 500 if PatchFileUseCase throws", async () => {
