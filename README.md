@@ -111,6 +111,84 @@ Add the following configuration to your MCP settings:
   - `list_projects`: List available projects (excludes hidden directories)
   - `list_project_files`: List files within a project
 
+### Line Number Support
+
+The `memory_bank_read` tool includes optional line number metadata to assist with patch operations.
+
+#### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `projectName` | string | Yes | - | The name of the project |
+| `fileName` | string | Yes | - | The name of the file to read |
+| `includeLineNumbers` | boolean | No | `true` | Include line numbers as metadata prefix |
+
+#### Line Number Format
+
+When `includeLineNumbers` is enabled (default), each line is prefixed with its 1-indexed line number followed by a pipe separator:
+
+```
+1|# Project Brief
+2|
+3|## Overview
+4|This is an example file content.
+5|
+6|## Goals
+7|- Goal 1
+8|- Goal 2
+```
+
+**Format characteristics:**
+- **1-indexed**: Line numbers start at 1, matching standard editor conventions
+- **Pipe separator**: The `|` character provides an unambiguous delimiter that's easily parseable
+- **Right-padded**: Line numbers are padded for alignment in files with many lines (e.g., `  1|` for files with 100+ lines)
+- **Metadata only**: Line numbers are added to the response only and are never persisted to disk
+
+#### Usage Examples
+
+**Read with line numbers (default):**
+```json
+{
+  "projectName": "my-project",
+  "fileName": "activeContext.md"
+}
+```
+
+**Read without line numbers:**
+```json
+{
+  "projectName": "my-project",
+  "fileName": "activeContext.md",
+  "includeLineNumbers": false
+}
+```
+
+#### Parsing Line Numbers
+
+For clients using the line-numbered content for patch operations:
+
+```javascript
+// Parse a line-numbered response
+function parseLineNumberedContent(content) {
+  return content.split('\n').map(line => {
+    const match = line.match(/^\s*(\d+)\|(.*)$/);
+    if (match) {
+      return {
+        lineNumber: parseInt(match[1], 10),
+        content: match[2]
+      };
+    }
+    return { lineNumber: null, content: line };
+  });
+}
+```
+
+#### Data Integrity
+
+- Line numbers are **only added to retrieval responses**
+- Line numbers are **never persisted** to Memory Bank files on disk
+- Write and update operations receive content as-is (clients should strip any line numbers before saving)
+
 ## MCP Server Prompts
 
 The server supports the [MCP Server Prompts specification](https://modelcontextprotocol.io/specification/2025-06-18/server/prompts), allowing you to create and use reusable prompt templates.

@@ -13,3 +13,5 @@ core
 # Next.js web-ui
 src/web-ui/.next/
 src/web-ui/out/
+
+.cursor/mcp.json
