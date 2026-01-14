@@ -1,8 +1,8 @@
 import { Validator } from "../../../../presentation/protocols/validator.js";
 import {
-  DefinedFieldValidator,
   ParamNameValidator,
   RequiredFieldValidator,
+  StringFieldValidator,
   ValidatorComposite,
 } from "../../../../validators/index.js";
 import { PathSecurityValidator } from "../../../../validators/path-security-validator.js";
@@ -13,9 +13,9 @@ const makeValidations = (): Validator[] => {
     new RequiredFieldValidator("fileName"),
     new RequiredFieldValidator("startLine"),
     new RequiredFieldValidator("endLine"),
-    // Use DefinedFieldValidator for content fields to allow empty strings (for deletion)
-    new DefinedFieldValidator("oldContent"),
-    new DefinedFieldValidator("newContent"),
+    // Use StringFieldValidator for content fields to allow empty strings and validate type
+    new StringFieldValidator("oldContent"),
+    new StringFieldValidator("newContent"),
     new ParamNameValidator("projectName"),
     new ParamNameValidator("fileName"),
     new PathSecurityValidator("projectName"),
