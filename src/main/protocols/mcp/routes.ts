@@ -167,12 +167,12 @@ export default () => {
             description: "The name of the file to patch",
           },
           startLine: {
-            type: "number",
+            type: "integer",
             description:
               "The starting line number (1-based) of the content to replace",
           },
           endLine: {
-            type: "number",
+            type: "integer",
             description:
               "The ending line number (1-based, inclusive) of the content to replace",
           },

@@ -13,7 +13,10 @@ export class PatchFile implements PatchFileUseCase {
   ) {}
 
   async patchFile(params: PatchFileParams): Promise<PatchFileResult> {
-    const { projectName, fileName, startLine, endLine, oldContent, newContent } = params;
+    const { projectName, fileName, oldContent, newContent } = params;
+    // Ensure line numbers are integers (defense in depth)
+    const startLine = Math.floor(params.startLine);
+    const endLine = Math.floor(params.endLine);
 
     // Check if project exists
     const projectExists = await this.projectRepository.projectExists(projectName);

@@ -1,5 +1,6 @@
 import { Validator } from "../../../../presentation/protocols/validator.js";
 import {
+  DefinedFieldValidator,
   ParamNameValidator,
   RequiredFieldValidator,
   ValidatorComposite,
@@ -12,8 +13,9 @@ const makeValidations = (): Validator[] => {
     new RequiredFieldValidator("fileName"),
     new RequiredFieldValidator("startLine"),
     new RequiredFieldValidator("endLine"),
-    new RequiredFieldValidator("oldContent"),
-    new RequiredFieldValidator("newContent"),
+    // Use DefinedFieldValidator for content fields to allow empty strings (for deletion)
+    new DefinedFieldValidator("oldContent"),
+    new DefinedFieldValidator("newContent"),
     new ParamNameValidator("projectName"),
     new ParamNameValidator("fileName"),
     new PathSecurityValidator("projectName"),
