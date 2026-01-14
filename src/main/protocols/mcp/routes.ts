@@ -2,6 +2,7 @@ import {
   makeDeleteController,
   makeListProjectFilesController,
   makeListProjectsController,
+  makePatchController,
   makeReadController,
   makeUpdateController,
   makeWriteController,
@@ -146,6 +147,56 @@ export default () => {
       },
     },
     handler: adaptMcpRequestHandler(makeDeleteController()),
+  });
+
+  router.setTool({
+    schema: {
+      name: "memory_bank_patch",
+      title: "Patch Memory Bank File",
+      description:
+        "Apply a surgical patch to an existing memory bank file. The patch verifies that the content at the specified line range matches the expected oldContent before applying the replacement. This ensures safe, context-aware modifications without requiring full document rewrites.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          projectName: {
+            type: "string",
+            description: "The name of the project",
+          },
+          fileName: {
+            type: "string",
+            description: "The name of the file to patch",
+          },
+          startLine: {
+            type: "integer",
+            description:
+              "The starting line number (1-based) of the content to replace",
+          },
+          endLine: {
+            type: "integer",
+            description:
+              "The ending line number (1-based, inclusive) of the content to replace",
+          },
+          oldContent: {
+            type: "string",
+            description:
+              "The exact content expected at the specified line range (for verification)",
+          },
+          newContent: {
+            type: "string",
+            description: "The new content to replace the old content with",
+          },
+        },
+        required: [
+          "projectName",
+          "fileName",
+          "startLine",
+          "endLine",
+          "oldContent",
+          "newContent",
+        ],
+      },
+    },
+    handler: adaptMcpRequestHandler(makePatchController()),
   });
 
   // Prompt endpoints
