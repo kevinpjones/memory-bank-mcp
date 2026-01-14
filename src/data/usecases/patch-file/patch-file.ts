@@ -35,7 +35,10 @@ export class PatchFile implements PatchFileUseCase {
     const totalLines = lines.length;
 
     // Validate line range (1-based indexing)
+    // Note: NaN comparisons always return false, so we must check explicitly
     if (
+      Number.isNaN(startLine) ||
+      Number.isNaN(endLine) ||
       startLine < 1 ||
       endLine < startLine ||
       endLine > totalLines

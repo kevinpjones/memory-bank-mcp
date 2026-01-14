@@ -159,6 +159,38 @@ describe("PatchFile Use Case", () => {
       expect(result.errorContext?.totalLines).toBe(3);
     });
 
+    it("should return INVALID_LINE_RANGE if startLine is NaN", async () => {
+      const { sut } = makeSut();
+
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: NaN,
+        endLine: 1,
+        oldContent: "line 1",
+        newContent: "new line 1",
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("INVALID_LINE_RANGE");
+    });
+
+    it("should return INVALID_LINE_RANGE if endLine is NaN", async () => {
+      const { sut } = makeSut();
+
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 1,
+        endLine: NaN,
+        oldContent: "line 1",
+        newContent: "new line 1",
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("INVALID_LINE_RANGE");
+    });
+
     it("should accept valid line range at file boundaries", async () => {
       const { sut, fileRepositoryStub } = makeSut();
       vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce("line 1\nline 2\nline 3");
