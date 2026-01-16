@@ -5,6 +5,14 @@ import {
   PatchFileResult,
   PatchFileUseCase,
 } from "./patch-file-protocols.js";
+import {
+  normalizeLineEndings,
+  normalizeForComparison,
+} from "../../helpers/index.js";
+import {
+  stripLineNumbers,
+  hasLineNumbers,
+} from "../../../presentation/helpers/line-numbers.js";
 
 export class PatchFile implements PatchFileUseCase {
   constructor(
@@ -30,8 +38,12 @@ export class PatchFile implements PatchFileUseCase {
       return { success: false, error: "FILE_NOT_FOUND" };
     }
 
-    // Split content into lines
-    const lines = currentContent.split("\n");
+    // Normalize line endings in the file content to handle cross-platform differences
+    // This ensures CRLF (Windows), CR (old Mac), and LF (Unix) are all treated consistently
+    const normalizedFileContent = normalizeLineEndings(currentContent);
+
+    // Split normalized content into lines
+    const lines = normalizedFileContent.split("\n");
     const totalLines = lines.length;
 
     // Validate line range (1-based indexing)
@@ -54,10 +66,23 @@ export class PatchFile implements PatchFileUseCase {
     const extractedLines = lines.slice(startLine - 1, endLine);
     const extractedContent = extractedLines.join("\n");
 
-    // Normalize content for comparison (trim at most one trailing newline for flexibility)
-    // Using /\n$/ instead of /\n+$/ to preserve distinction between empty lines
-    const normalizedOldContent = oldContent.replace(/\n$/, "");
-    const normalizedExtractedContent = extractedContent.replace(/\n$/, "");
+    // Strip line number prefixes from oldContent and newContent if present
+    // This allows agents to copy content directly from memory_bank_read responses
+    // (which include line numbers by default) without manual stripping
+    const strippedOldContent = hasLineNumbers(oldContent)
+      ? stripLineNumbers(oldContent)
+      : oldContent;
+    const strippedNewContent = hasLineNumbers(newContent)
+      ? stripLineNumbers(newContent)
+      : newContent;
+
+    // Normalize both contents for comparison:
+    // - Normalizes line endings (CRLF, CR -> LF)
+    // - Trims a single trailing newline for flexibility
+    // This eliminates false negatives from line ending differences while
+    // still maintaining security by requiring exact content match
+    const normalizedOldContent = normalizeForComparison(strippedOldContent);
+    const normalizedExtractedContent = normalizeForComparison(extractedContent);
 
     // Verify content matches
     if (normalizedExtractedContent !== normalizedOldContent) {
@@ -69,7 +94,10 @@ export class PatchFile implements PatchFileUseCase {
     }
 
     // Apply the patch: replace the specified line range with new content
-    const newContentLines = newContent.split("\n");
+    // Use stripped content (without line number prefixes) for the actual file update
+    // Also normalize line endings to prevent CRLF from leaving \r in the output
+    const normalizedNewContent = normalizeLineEndings(strippedNewContent);
+    const newContentLines = normalizedNewContent.split("\n");
     const newLines = [
       ...lines.slice(0, startLine - 1),
       ...newContentLines,

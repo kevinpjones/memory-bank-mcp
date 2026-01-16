@@ -77,32 +77,66 @@ export function stripLineNumbers(content: string): string {
 }
 
 /**
- * Checks if content appears to have line number prefixes.
+ * Checks if content appears to have line number prefixes from addLineNumbers().
+ * 
+ * This function uses strict validation to avoid false positives with content
+ * that naturally contains digit-pipe patterns (like markdown tables or
+ * pipe-delimited data). It requires:
+ * 1. ALL lines must have the line number prefix pattern
+ * 2. Line numbers must be sequential (1, 2, 3, ...)
+ * 3. Minimum 2 lines to establish a pattern (single lines are ambiguous)
  * 
  * @param content - Content to check
  * @returns True if content appears to have line number prefixes
+ * 
+ * @example
+ * hasLineNumbers("1|hello\n2|world") // true - sequential line numbers
+ * hasLineNumbers("1|hello") // false - single line is ambiguous
+ * hasLineNumbers("1|foo\n3|bar") // false - non-sequential
+ * hasLineNumbers("| 1 | data |") // false - doesn't match pattern
  */
 export function hasLineNumbers(content: string): boolean {
   if (!content) {
     return false;
   }
 
-  const lines = content.split('\n');
-  if (lines.length === 0) {
+  // Split and filter out trailing empty line caused by trailing newline
+  // e.g., "1|line\n2|line\n".split('\n') = ["1|line", "2|line", ""]
+  // We keep internal empty lines but remove trailing empty string
+  let lines = content.split('\n');
+  if (lines.length > 0 && lines[lines.length - 1] === '') {
+    lines = lines.slice(0, -1);
+  }
+  
+  // Require at least 2 lines to establish a sequential pattern
+  // Single lines are ambiguous (could be "1|actual data")
+  if (lines.length < 2) {
     return false;
   }
 
-  // Check if the first few non-empty lines match the line number pattern
-  const lineNumberPattern = /^\s*\d+\|/;
-  const samplesToCheck = Math.min(3, lines.length);
-  let matchCount = 0;
-
-  for (let i = 0; i < samplesToCheck; i++) {
-    if (lineNumberPattern.test(lines[i])) {
-      matchCount++;
+  // Pattern to extract line number: optional whitespace, digits, pipe
+  const lineNumberPattern = /^\s*(\d+)\|/;
+  
+  let previousLineNum = 0;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const match = lines[i].match(lineNumberPattern);
+    
+    // ALL lines must match the pattern
+    if (!match) {
+      return false;
     }
+    
+    const lineNum = parseInt(match[1], 10);
+    
+    // Line numbers must be sequential (each line number = previous + 1)
+    // First line can start at any number (to support partial content)
+    if (i > 0 && lineNum !== previousLineNum + 1) {
+      return false;
+    }
+    
+    previousLineNum = lineNum;
   }
-
-  // Consider it has line numbers if most sample lines match
-  return matchCount >= Math.ceil(samplesToCheck / 2);
+  
+  return true;
 }
