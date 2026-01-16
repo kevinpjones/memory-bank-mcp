@@ -612,6 +612,58 @@ describe("PatchFile Use Case", () => {
         "line 1\n100 items in stock\nline 3"
       );
     });
+
+    it("should normalize CRLF line endings in newContent to prevent corruption", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "line 1\nline 2\nline 3"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      // newContent has CRLF line endings (Windows-style)
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 2,
+        endLine: 2,
+        oldContent: "line 2",
+        newContent: "new line A\r\nnew line B\r\nnew line C",
+      });
+
+      expect(result.success).toBe(true);
+      // CRLF should be normalized to LF - no \r characters in output
+      expect(updateFileSpy).toHaveBeenCalledWith(
+        "any_project",
+        "any_file.md",
+        "line 1\nnew line A\nnew line B\nnew line C\nline 3"
+      );
+    });
+
+    it("should normalize CR line endings in newContent", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "line 1\nline 2\nline 3"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      // newContent has CR line endings (old Mac-style)
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 2,
+        endLine: 2,
+        oldContent: "line 2",
+        newContent: "new line A\rnew line B",
+      });
+
+      expect(result.success).toBe(true);
+      // CR should be normalized to LF
+      expect(updateFileSpy).toHaveBeenCalledWith(
+        "any_project",
+        "any_file.md",
+        "line 1\nnew line A\nnew line B\nline 3"
+      );
+    });
   });
 
   describe("Cross-Platform Line Ending Support", () => {

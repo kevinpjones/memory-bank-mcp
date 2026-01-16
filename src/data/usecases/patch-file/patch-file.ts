@@ -95,7 +95,9 @@ export class PatchFile implements PatchFileUseCase {
 
     // Apply the patch: replace the specified line range with new content
     // Use stripped content (without line number prefixes) for the actual file update
-    const newContentLines = strippedNewContent.split("\n");
+    // Also normalize line endings to prevent CRLF from leaving \r in the output
+    const normalizedNewContent = normalizeLineEndings(strippedNewContent);
+    const newContentLines = normalizedNewContent.split("\n");
     const newLines = [
       ...lines.slice(0, startLine - 1),
       ...newContentLines,
