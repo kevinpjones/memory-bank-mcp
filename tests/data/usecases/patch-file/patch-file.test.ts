@@ -385,14 +385,38 @@ describe("PatchFile Use Case", () => {
   });
 
   describe("Line Number Prefix Handling", () => {
-    it("should automatically strip line numbers from oldContent when present", async () => {
+    it("should automatically strip line numbers from oldContent when present (multi-line)", async () => {
       const { sut, fileRepositoryStub } = makeSut();
       vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
         "line 1\nline 2\nline 3"
       );
       const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
 
-      // oldContent has line number prefixes (as returned by memory_bank_read)
+      // oldContent has sequential line number prefixes (as returned by memory_bank_read)
+      // Must be multi-line to trigger detection (single line is ambiguous)
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 1,
+        endLine: 2,
+        oldContent: "1|line 1\n2|line 2",
+        newContent: "new line 1\nnew line 2",
+      });
+
+      expect(result.success).toBe(true);
+      expect(updateFileSpy).toHaveBeenCalled();
+    });
+
+    it("should NOT strip single-line content that looks like line numbers (ambiguous)", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      // File actually contains "2|line 2" as literal content
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "line 1\n2|line 2\nline 3"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      // Single-line oldContent with digit-pipe pattern should NOT be stripped
+      // because it's ambiguous (could be actual content)
       const result = await sut.patchFile({
         projectName: "any_project",
         fileName: "any_file.md",
@@ -403,7 +427,11 @@ describe("PatchFile Use Case", () => {
       });
 
       expect(result.success).toBe(true);
-      expect(updateFileSpy).toHaveBeenCalled();
+      expect(updateFileSpy).toHaveBeenCalledWith(
+        "any_project",
+        "any_file.md",
+        "line 1\nnew line 2\nline 3"
+      );
     });
 
     it("should handle padded line numbers from oldContent", async () => {
@@ -510,21 +538,22 @@ describe("PatchFile Use Case", () => {
       expect(updateFileSpy).toHaveBeenCalled();
     });
 
-    it("should strip line numbers from newContent before writing", async () => {
+    it("should strip line numbers from newContent before writing (multi-line)", async () => {
       const { sut, fileRepositoryStub } = makeSut();
       vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
         "line 1\nline 2\nline 3"
       );
       const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
 
-      // Both oldContent and newContent have line number prefixes
+      // Both oldContent and newContent have sequential line number prefixes
+      // Must be multi-line to trigger detection
       const result = await sut.patchFile({
         projectName: "any_project",
         fileName: "any_file.md",
-        startLine: 2,
+        startLine: 1,
         endLine: 2,
-        oldContent: "2|line 2",
-        newContent: "2|new line 2",
+        oldContent: "1|line 1\n2|line 2",
+        newContent: "1|new line 1\n2|new line 2",
       });
 
       expect(result.success).toBe(true);
@@ -532,7 +561,33 @@ describe("PatchFile Use Case", () => {
       expect(updateFileSpy).toHaveBeenCalledWith(
         "any_project",
         "any_file.md",
-        "line 1\nnew line 2\nline 3"
+        "new line 1\nnew line 2\nline 3"
+      );
+    });
+
+    it("should NOT strip single-line newContent that looks like line numbers (ambiguous)", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "line 1\nline 2\nline 3"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      // Single-line newContent with digit-pipe pattern should NOT be stripped
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 2,
+        endLine: 2,
+        oldContent: "line 2",
+        newContent: "2|new value",
+      });
+
+      expect(result.success).toBe(true);
+      // Single-line content is preserved as-is (not stripped)
+      expect(updateFileSpy).toHaveBeenCalledWith(
+        "any_project",
+        "any_file.md",
+        "line 1\n2|new value\nline 3"
       );
     });
 
