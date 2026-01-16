@@ -9,6 +9,10 @@ import {
   normalizeLineEndings,
   normalizeForComparison,
 } from "../../helpers/index.js";
+import {
+  stripLineNumbers,
+  hasLineNumbers,
+} from "../../../presentation/helpers/line-numbers.js";
 
 export class PatchFile implements PatchFileUseCase {
   constructor(
@@ -62,12 +66,19 @@ export class PatchFile implements PatchFileUseCase {
     const extractedLines = lines.slice(startLine - 1, endLine);
     const extractedContent = extractedLines.join("\n");
 
+    // Strip line number prefixes from oldContent if present
+    // This allows agents to copy content directly from memory_bank_read responses
+    // (which include line numbers by default) without manual stripping
+    const strippedOldContent = hasLineNumbers(oldContent)
+      ? stripLineNumbers(oldContent)
+      : oldContent;
+
     // Normalize both contents for comparison:
     // - Normalizes line endings (CRLF, CR -> LF)
     // - Trims a single trailing newline for flexibility
     // This eliminates false negatives from line ending differences while
     // still maintaining security by requiring exact content match
-    const normalizedOldContent = normalizeForComparison(oldContent);
+    const normalizedOldContent = normalizeForComparison(strippedOldContent);
     const normalizedExtractedContent = normalizeForComparison(extractedContent);
 
     // Verify content matches

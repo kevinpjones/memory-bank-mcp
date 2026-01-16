@@ -384,6 +384,133 @@ describe("PatchFile Use Case", () => {
     });
   });
 
+  describe("Line Number Prefix Handling", () => {
+    it("should automatically strip line numbers from oldContent when present", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "line 1\nline 2\nline 3"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      // oldContent has line number prefixes (as returned by memory_bank_read)
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 2,
+        endLine: 2,
+        oldContent: "2|line 2",
+        newContent: "new line 2",
+      });
+
+      expect(result.success).toBe(true);
+      expect(updateFileSpy).toHaveBeenCalled();
+    });
+
+    it("should handle padded line numbers from oldContent", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "line 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline 9\nline 10\nline 11"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      // oldContent has padded line number prefixes (e.g., " 9|" for alignment)
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 9,
+        endLine: 10,
+        oldContent: " 9|line 9\n10|line 10",
+        newContent: "new line 9\nnew line 10",
+      });
+
+      expect(result.success).toBe(true);
+      expect(updateFileSpy).toHaveBeenCalled();
+    });
+
+    it("should handle multi-line oldContent with line numbers", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "# Header\n\nFirst paragraph.\n\nSecond paragraph."
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      // oldContent copied directly from memory_bank_read response
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 1,
+        endLine: 3,
+        oldContent: "1|# Header\n2|\n3|First paragraph.",
+        newContent: "# New Header\n\nUpdated first paragraph.",
+      });
+
+      expect(result.success).toBe(true);
+      expect(updateFileSpy).toHaveBeenCalled();
+    });
+
+    it("should still work with oldContent without line numbers", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "line 1\nline 2\nline 3"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      // oldContent without line numbers (manual construction)
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 2,
+        endLine: 2,
+        oldContent: "line 2",
+        newContent: "new line 2",
+      });
+
+      expect(result.success).toBe(true);
+      expect(updateFileSpy).toHaveBeenCalled();
+    });
+
+    it("should not strip content that looks like line numbers but is actual content", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      // File contains actual content that starts with "1|" pattern
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "This is regular content\nNo line numbers here\nJust text"
+      );
+
+      // oldContent doesn't have consistent line number pattern (only partial match)
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 1,
+        endLine: 1,
+        oldContent: "This is regular content",
+        newContent: "New content",
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should handle line numbers with trailing CRLF", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "line 1\nline 2\nline 3"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      // oldContent has line numbers AND CRLF line endings
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 1,
+        endLine: 2,
+        oldContent: "1|line 1\r\n2|line 2",
+        newContent: "new line 1\nnew line 2",
+      });
+
+      expect(result.success).toBe(true);
+      expect(updateFileSpy).toHaveBeenCalled();
+    });
+  });
+
   describe("Cross-Platform Line Ending Support", () => {
     it("should match content in file with CRLF (Windows) line endings against LF oldContent", async () => {
       const { sut, fileRepositoryStub } = makeSut();
