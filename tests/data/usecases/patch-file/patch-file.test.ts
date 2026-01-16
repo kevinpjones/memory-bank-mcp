@@ -509,6 +509,109 @@ describe("PatchFile Use Case", () => {
       expect(result.success).toBe(true);
       expect(updateFileSpy).toHaveBeenCalled();
     });
+
+    it("should strip line numbers from newContent before writing", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "line 1\nline 2\nline 3"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      // Both oldContent and newContent have line number prefixes
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 2,
+        endLine: 2,
+        oldContent: "2|line 2",
+        newContent: "2|new line 2",
+      });
+
+      expect(result.success).toBe(true);
+      // Verify line numbers are stripped from newContent before writing
+      expect(updateFileSpy).toHaveBeenCalledWith(
+        "any_project",
+        "any_file.md",
+        "line 1\nnew line 2\nline 3"
+      );
+    });
+
+    it("should strip line numbers from multi-line newContent", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "# Header\n\nOld content\n\nFooter"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      // newContent has line number prefixes (copied from read response then edited)
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 1,
+        endLine: 3,
+        oldContent: "1|# Header\n2|\n3|Old content",
+        newContent: "1|# New Header\n2|\n3|New content",
+      });
+
+      expect(result.success).toBe(true);
+      // Verify line numbers are stripped - file should NOT contain "1|", "2|", etc.
+      expect(updateFileSpy).toHaveBeenCalledWith(
+        "any_project",
+        "any_file.md",
+        "# New Header\n\nNew content\n\nFooter"
+      );
+    });
+
+    it("should handle newContent without line numbers (backward compatibility)", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "line 1\nline 2\nline 3"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      // newContent without line numbers (traditional usage)
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 2,
+        endLine: 2,
+        oldContent: "line 2",
+        newContent: "replaced line 2",
+      });
+
+      expect(result.success).toBe(true);
+      expect(updateFileSpy).toHaveBeenCalledWith(
+        "any_project",
+        "any_file.md",
+        "line 1\nreplaced line 2\nline 3"
+      );
+    });
+
+    it("should not strip content that looks like line numbers but is actual content in newContent", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "line 1\nline 2\nline 3"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      // newContent has content that happens to start with digits but isn't a line number pattern
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 2,
+        endLine: 2,
+        oldContent: "line 2",
+        newContent: "100 items in stock",
+      });
+
+      expect(result.success).toBe(true);
+      // Content should be preserved as-is since it doesn't match line number pattern
+      expect(updateFileSpy).toHaveBeenCalledWith(
+        "any_project",
+        "any_file.md",
+        "line 1\n100 items in stock\nline 3"
+      );
+    });
   });
 
   describe("Cross-Platform Line Ending Support", () => {

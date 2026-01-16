@@ -66,12 +66,15 @@ export class PatchFile implements PatchFileUseCase {
     const extractedLines = lines.slice(startLine - 1, endLine);
     const extractedContent = extractedLines.join("\n");
 
-    // Strip line number prefixes from oldContent if present
+    // Strip line number prefixes from oldContent and newContent if present
     // This allows agents to copy content directly from memory_bank_read responses
     // (which include line numbers by default) without manual stripping
     const strippedOldContent = hasLineNumbers(oldContent)
       ? stripLineNumbers(oldContent)
       : oldContent;
+    const strippedNewContent = hasLineNumbers(newContent)
+      ? stripLineNumbers(newContent)
+      : newContent;
 
     // Normalize both contents for comparison:
     // - Normalizes line endings (CRLF, CR -> LF)
@@ -91,7 +94,8 @@ export class PatchFile implements PatchFileUseCase {
     }
 
     // Apply the patch: replace the specified line range with new content
-    const newContentLines = newContent.split("\n");
+    // Use stripped content (without line number prefixes) for the actual file update
+    const newContentLines = strippedNewContent.split("\n");
     const newLines = [
       ...lines.slice(0, startLine - 1),
       ...newContentLines,
