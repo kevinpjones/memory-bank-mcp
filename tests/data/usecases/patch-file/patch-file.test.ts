@@ -384,6 +384,159 @@ describe("PatchFile Use Case", () => {
     });
   });
 
+  describe("Cross-Platform Line Ending Support", () => {
+    it("should match content in file with CRLF (Windows) line endings against LF oldContent", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      // File has Windows-style CRLF line endings
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "line 1\r\nline 2\r\nline 3"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 2,
+        endLine: 2,
+        // oldContent uses Unix-style LF
+        oldContent: "line 2",
+        newContent: "new line 2",
+      });
+
+      expect(result.success).toBe(true);
+      expect(updateFileSpy).toHaveBeenCalled();
+    });
+
+    it("should match content in file with CR (old Mac) line endings against LF oldContent", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      // File has old Mac-style CR line endings
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "line 1\rline 2\rline 3"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 2,
+        endLine: 2,
+        oldContent: "line 2",
+        newContent: "new line 2",
+      });
+
+      expect(result.success).toBe(true);
+      expect(updateFileSpy).toHaveBeenCalled();
+    });
+
+    it("should match content in file with mixed line endings", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      // File has mixed line endings
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "line 1\r\nline 2\rline 3\nline 4"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 2,
+        endLine: 3,
+        oldContent: "line 2\nline 3",
+        newContent: "new line 2\nnew line 3",
+      });
+
+      expect(result.success).toBe(true);
+      expect(updateFileSpy).toHaveBeenCalled();
+    });
+
+    it("should match oldContent with CRLF against file with LF", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      // File has Unix-style LF line endings
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "line 1\nline 2\nline 3"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 1,
+        endLine: 2,
+        // oldContent uses Windows-style CRLF
+        oldContent: "line 1\r\nline 2",
+        newContent: "new content",
+      });
+
+      expect(result.success).toBe(true);
+      expect(updateFileSpy).toHaveBeenCalled();
+    });
+
+    it("should match oldContent with trailing CRLF against file content without", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "line 1\nline 2\nline 3"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 2,
+        endLine: 2,
+        // oldContent has trailing CRLF
+        oldContent: "line 2\r\n",
+        newContent: "new line 2",
+      });
+
+      expect(result.success).toBe(true);
+      expect(updateFileSpy).toHaveBeenCalled();
+    });
+
+    it("should handle multi-line patch with CRLF line endings in both file and oldContent", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "# Header\r\n\r\nFirst paragraph.\r\n\r\nSecond paragraph."
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 3,
+        endLine: 3,
+        oldContent: "First paragraph.\r\n",
+        newContent: "Updated first paragraph.",
+      });
+
+      expect(result.success).toBe(true);
+      expect(updateFileSpy).toHaveBeenCalled();
+    });
+
+    it("should correctly patch file with CRLF and produce normalized output", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "a\r\nb\r\nc"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 2,
+        endLine: 2,
+        oldContent: "b",
+        newContent: "X",
+      });
+
+      // After normalization, the file content is split on LF, so output uses LF
+      expect(updateFileSpy).toHaveBeenCalledWith(
+        "any_project",
+        "any_file.md",
+        "a\nX\nc"
+      );
+    });
+  });
+
   describe("Edge Cases", () => {
     it("should handle single-line file correctly", async () => {
       const { sut, fileRepositoryStub } = makeSut();
@@ -504,6 +657,185 @@ describe("PatchFile Use Case", () => {
       });
 
       expect(result).toEqual({ success: true, content: "new line 1" });
+    });
+  });
+
+  describe("Security - No False Positives", () => {
+    it("should reject patch when content differs (different text)", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "actual content\nline 2\nline 3"
+      );
+
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 1,
+        endLine: 1,
+        oldContent: "expected content",
+        newContent: "new content",
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("CONTENT_MISMATCH");
+    });
+
+    it("should reject patch when whitespace in lines differs", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "  indented\nline 2"
+      );
+
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 1,
+        endLine: 1,
+        oldContent: "indented", // Missing leading spaces
+        newContent: "new content",
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("CONTENT_MISMATCH");
+    });
+
+    it("should reject patch when trailing spaces differ", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "line with trailing   \nline 2"
+      );
+
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 1,
+        endLine: 1,
+        oldContent: "line with trailing", // Missing trailing spaces
+        newContent: "new content",
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("CONTENT_MISMATCH");
+    });
+
+    it("should reject patch when line count differs", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "line 1\nline 2\nline 3"
+      );
+
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 1,
+        endLine: 2,
+        oldContent: "line 1\nline 2\nline 3", // Three lines when range is two lines
+        newContent: "new content",
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("CONTENT_MISMATCH");
+    });
+
+    it("should reject patch when case differs", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "Hello World\nline 2"
+      );
+
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 1,
+        endLine: 1,
+        oldContent: "hello world", // Different case
+        newContent: "new content",
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("CONTENT_MISMATCH");
+    });
+
+    it("should include actual content in error for debugging", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "actual line 1\nline 2\nline 3"
+      );
+
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 1,
+        endLine: 1,
+        oldContent: "expected line 1",
+        newContent: "new content",
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("CONTENT_MISMATCH");
+      expect(result.errorContext?.actualContent).toBe("actual line 1");
+    });
+  });
+
+  describe("Unicode and Special Characters", () => {
+    it("should match content with unicode characters", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "Hello 世界\nПривет мир\n🎉 emoji"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 2,
+        endLine: 2,
+        oldContent: "Привет мир",
+        newContent: "Hello world",
+      });
+
+      expect(result.success).toBe(true);
+      expect(updateFileSpy).toHaveBeenCalled();
+    });
+
+    it("should match content with emojis", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "line 1\n🎉 celebration 🎊\nline 3"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 2,
+        endLine: 2,
+        oldContent: "🎉 celebration 🎊",
+        newContent: "party time",
+      });
+
+      expect(result.success).toBe(true);
+      expect(updateFileSpy).toHaveBeenCalled();
+    });
+
+    it("should match content with unicode line endings combined with CRLF", async () => {
+      const { sut, fileRepositoryStub } = makeSut();
+      vi.spyOn(fileRepositoryStub, "loadFile").mockResolvedValueOnce(
+        "日本語\r\n中文\r\n한국어"
+      );
+      const updateFileSpy = vi.spyOn(fileRepositoryStub, "updateFile");
+
+      const result = await sut.patchFile({
+        projectName: "any_project",
+        fileName: "any_file.md",
+        startLine: 2,
+        endLine: 2,
+        oldContent: "中文",
+        newContent: "Chinese",
+      });
+
+      expect(result.success).toBe(true);
+      expect(updateFileSpy).toHaveBeenCalled();
     });
   });
 });

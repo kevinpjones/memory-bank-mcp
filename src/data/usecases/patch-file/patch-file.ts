@@ -5,6 +5,10 @@ import {
   PatchFileResult,
   PatchFileUseCase,
 } from "./patch-file-protocols.js";
+import {
+  normalizeLineEndings,
+  normalizeForComparison,
+} from "../../helpers/index.js";
 
 export class PatchFile implements PatchFileUseCase {
   constructor(
@@ -30,8 +34,12 @@ export class PatchFile implements PatchFileUseCase {
       return { success: false, error: "FILE_NOT_FOUND" };
     }
 
-    // Split content into lines
-    const lines = currentContent.split("\n");
+    // Normalize line endings in the file content to handle cross-platform differences
+    // This ensures CRLF (Windows), CR (old Mac), and LF (Unix) are all treated consistently
+    const normalizedFileContent = normalizeLineEndings(currentContent);
+
+    // Split normalized content into lines
+    const lines = normalizedFileContent.split("\n");
     const totalLines = lines.length;
 
     // Validate line range (1-based indexing)
@@ -54,10 +62,13 @@ export class PatchFile implements PatchFileUseCase {
     const extractedLines = lines.slice(startLine - 1, endLine);
     const extractedContent = extractedLines.join("\n");
 
-    // Normalize content for comparison (trim at most one trailing newline for flexibility)
-    // Using /\n$/ instead of /\n+$/ to preserve distinction between empty lines
-    const normalizedOldContent = oldContent.replace(/\n$/, "");
-    const normalizedExtractedContent = extractedContent.replace(/\n$/, "");
+    // Normalize both contents for comparison:
+    // - Normalizes line endings (CRLF, CR -> LF)
+    // - Trims a single trailing newline for flexibility
+    // This eliminates false negatives from line ending differences while
+    // still maintaining security by requiring exact content match
+    const normalizedOldContent = normalizeForComparison(oldContent);
+    const normalizedExtractedContent = normalizeForComparison(extractedContent);
 
     // Verify content matches
     if (normalizedExtractedContent !== normalizedOldContent) {
