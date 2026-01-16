@@ -109,6 +109,12 @@ describe("hasLineNumbers", () => {
     expect(hasLineNumbers(content)).toBe(true);
   });
 
+  it("should return true for content with trailing newline", () => {
+    // Trailing newline should not prevent detection
+    const content = "1|first\n2|second\n3|third\n";
+    expect(hasLineNumbers(content)).toBe(true);
+  });
+
   it("should return true for content with padded line numbers", () => {
     const content = "  1|first\n  2|second\n  3|third";
     expect(hasLineNumbers(content)).toBe(true);

@@ -100,7 +100,13 @@ export function hasLineNumbers(content: string): boolean {
     return false;
   }
 
-  const lines = content.split('\n');
+  // Split and filter out trailing empty line caused by trailing newline
+  // e.g., "1|line\n2|line\n".split('\n') = ["1|line", "2|line", ""]
+  // We keep internal empty lines but remove trailing empty string
+  let lines = content.split('\n');
+  if (lines.length > 0 && lines[lines.length - 1] === '') {
+    lines = lines.slice(0, -1);
+  }
   
   // Require at least 2 lines to establish a sequential pattern
   // Single lines are ambiguous (could be "1|actual data")
