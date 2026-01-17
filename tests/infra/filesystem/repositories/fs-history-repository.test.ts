@@ -316,6 +316,24 @@ describe("FsHistoryRepository", () => {
       const content = await repository.getFileAtTime("test-project", "test-file.md", afterRecreate);
       expect(content).toBe("recreated");
     });
+
+    it("should throw error for invalid timestamp format", async () => {
+      await expect(
+        repository.getFileAtTime("test-project", "test-file.md", "invalid-timestamp")
+      ).rejects.toThrow('Invalid timestamp format: "invalid-timestamp"');
+    });
+
+    it("should throw error for empty timestamp", async () => {
+      await expect(
+        repository.getFileAtTime("test-project", "test-file.md", "")
+      ).rejects.toThrow('Invalid timestamp format: ""');
+    });
+
+    it("should throw error for malformed date string", async () => {
+      await expect(
+        repository.getFileAtTime("test-project", "test-file.md", "2024-13-45T99:99:99")
+      ).rejects.toThrow('Invalid timestamp format');
+    });
   });
 
   describe("getStateAtTime", () => {
@@ -418,6 +436,18 @@ describe("FsHistoryRepository", () => {
       const state = await repository.getStateAtTime("test-project", finalTimestamp);
       expect(state.files.size).toBe(1);
       expect(state.files.get("test-file.md")).toBe("new content");
+    });
+
+    it("should throw error for invalid timestamp format", async () => {
+      await expect(
+        repository.getStateAtTime("test-project", "invalid-timestamp")
+      ).rejects.toThrow('Invalid timestamp format: "invalid-timestamp"');
+    });
+
+    it("should throw error for empty timestamp", async () => {
+      await expect(
+        repository.getStateAtTime("test-project", "")
+      ).rejects.toThrow('Invalid timestamp format: ""');
     });
   });
 });

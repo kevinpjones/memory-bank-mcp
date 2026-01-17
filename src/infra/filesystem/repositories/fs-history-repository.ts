@@ -148,10 +148,22 @@ export class FsHistoryRepository implements HistoryRepository {
   }
 
   /**
+   * Validates that a timestamp string is a valid ISO 8601 date
+   * @throws Error if the timestamp is invalid
+   */
+  private validateTimestamp(timestamp: string): number {
+    const targetTime = new Date(timestamp).getTime();
+    if (isNaN(targetTime)) {
+      throw new Error(`Invalid timestamp format: "${timestamp}". Expected ISO 8601 format (e.g., "2024-01-15T10:30:00.000Z")`);
+    }
+    return targetTime;
+  }
+
+  /**
    * Reconstructs the complete project state at a specific point in time
    */
   async getStateAtTime(projectName: string, timestamp: string): Promise<ProjectStateAtTime> {
-    const targetTime = new Date(timestamp).getTime();
+    const targetTime = this.validateTimestamp(timestamp);
     const projectHistory = await this.getProjectHistory(projectName);
 
     // Filter entries up to and including the target timestamp
@@ -204,7 +216,7 @@ export class FsHistoryRepository implements HistoryRepository {
    * Gets the content of a specific file at a specific point in time
    */
   async getFileAtTime(projectName: string, fileName: string, timestamp: string): Promise<string | null> {
-    const targetTime = new Date(timestamp).getTime();
+    const targetTime = this.validateTimestamp(timestamp);
     const fileHistory = await this.getFileHistory(projectName, fileName);
 
     // Filter entries up to and including the target timestamp
