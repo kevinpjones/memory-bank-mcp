@@ -83,7 +83,7 @@ export class HistoryTrackingFileRepository implements FileRepository {
   }
 
   /**
-   * Deletes a file by recording it in history and removing it
+   * Deletes a file by removing it and recording the deletion in history
    */
   async deleteFile(projectName: string, fileName: string): Promise<boolean> {
     // Read file content before deletion for history
@@ -93,16 +93,20 @@ export class HistoryTrackingFileRepository implements FileRepository {
       return false;
     }
 
-    // Record deletion in history (preserves file content for recovery)
-    await this.historyRepository.recordHistory({
-      action: "deleted",
-      actor: this.actor,
-      projectName,
-      fileName,
-      content,
-    });
-
     // Delete the file using wrapped repository
-    return this.wrappedRepository.deleteFile(projectName, fileName);
+    const deleted = await this.wrappedRepository.deleteFile(projectName, fileName);
+
+    // Only record history if the deletion was successful
+    if (deleted) {
+      await this.historyRepository.recordHistory({
+        action: "deleted",
+        actor: this.actor,
+        projectName,
+        fileName,
+        content,
+      });
+    }
+
+    return deleted;
   }
 }
