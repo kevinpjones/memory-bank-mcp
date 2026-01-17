@@ -16,9 +16,11 @@ vi.mock('@/lib/memory-bank', () => ({
 // Mock fs-extra
 const mockEnsureDir = vi.fn();
 const mockMove = vi.fn();
+const mockPathExists = vi.fn();
 vi.mock('fs-extra', () => ({
   ensureDir: mockEnsureDir,
   move: mockMove,
+  pathExists: mockPathExists,
 }));
 
 // Mock path
@@ -31,6 +33,7 @@ describe('/api/projects/[id]/archive', () => {
     vi.clearAllMocks();
     mockEnsureDir.mockResolvedValue(undefined);
     mockMove.mockResolvedValue(undefined);
+    mockPathExists.mockResolvedValue(true); // Default: history exists
   });
 
   afterEach(() => {
@@ -38,7 +41,7 @@ describe('/api/projects/[id]/archive', () => {
   });
 
   describe('POST', () => {
-    it('successfully archives an existing project', async () => {
+    it('successfully archives an existing project with history', async () => {
       // Arrange
       const mockProjects = [
         { name: 'test-project', fileCount: 5, lastModified: new Date() },
@@ -66,6 +69,48 @@ describe('/api/projects/[id]/archive', () => {
       });
       
       expect(mockEnsureDir).toHaveBeenCalledWith('/test/memory-bank/.archive');
+      
+      // Verify project directory is moved
+      expect(mockMove).toHaveBeenCalledWith(
+        '/test/memory-bank/test-project',
+        expect.stringMatching(/\/test\/memory-bank\/\.archive\/test-project-ARCHIVED-/)
+      );
+      
+      // Verify history directory is also moved
+      expect(mockPathExists).toHaveBeenCalledWith('/test/memory-bank/.history/test-project');
+      expect(mockMove).toHaveBeenCalledWith(
+        '/test/memory-bank/.history/test-project',
+        expect.stringMatching(/\/test\/memory-bank\/\.archive\/test-project-ARCHIVED-.*\.history/)
+      );
+      
+      expect(mockMove).toHaveBeenCalledTimes(2);
+    });
+
+    it('successfully archives project without history', async () => {
+      // Arrange
+      const mockProjects = [
+        { name: 'test-project', fileCount: 5, lastModified: new Date() },
+      ];
+      
+      mockGetProjects.mockResolvedValue(mockProjects);
+      mockPathExists.mockResolvedValue(false); // No history exists
+      
+      const request = new NextRequest('http://localhost/api/projects/test-project/archive', {
+        method: 'POST',
+      });
+      
+      const params = Promise.resolve({ id: 'test-project' });
+
+      // Act
+      const response = await POST(request, { params });
+      const data = await response.json();
+
+      // Assert
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      
+      // Verify only project directory is moved (no history)
+      expect(mockMove).toHaveBeenCalledTimes(1);
       expect(mockMove).toHaveBeenCalledWith(
         '/test/memory-bank/test-project',
         expect.stringMatching(/\/test\/memory-bank\/\.archive\/test-project-ARCHIVED-/)

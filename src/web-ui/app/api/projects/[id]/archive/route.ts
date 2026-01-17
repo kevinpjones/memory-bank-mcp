@@ -37,6 +37,7 @@ export async function POST(
 
     // Archive the entire project directory
     const projectPath = path.join(config.memoryBankRoot, projectName);
+    const historyPath = path.join(config.memoryBankRoot, '.history', projectName);
     const archiveBasePath = path.join(config.memoryBankRoot, '.archive');
     
     // Create archive directory if it doesn't exist
@@ -46,9 +47,15 @@ export async function POST(
     const timestamp = new Date().toISOString().replace(/:/g, '_').replace(/\./g, '_');
     const archivedProjectName = `${projectName}-ARCHIVED-${timestamp}`;
     const archivePath = path.join(archiveBasePath, archivedProjectName);
+    const archivedHistoryPath = path.join(archiveBasePath, `${archivedProjectName}.history`);
 
     // Move the entire project directory to archive
     await fs.move(projectPath, archivePath);
+
+    // Move project history to archive (if it exists)
+    if (await fs.pathExists(historyPath)) {
+      await fs.move(historyPath, archivedHistoryPath);
+    }
 
     return NextResponse.json({
       success: true,
