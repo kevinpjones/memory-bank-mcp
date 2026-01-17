@@ -83,7 +83,13 @@ export class HistoryTrackingFileRepository implements FileRepository {
   }
 
   /**
-   * Deletes a file by removing it and recording the deletion in history
+   * Deletes a file by recording the deletion in history first, then removing it.
+   * 
+   * History is recorded BEFORE deletion to prevent unrecoverable data loss.
+   * If history recording fails, the file remains intact.
+   * If deletion fails after history is recorded, we have a minor inconsistency
+   * (history shows deleted but file exists) which is far less severe than
+   * losing the file without any history record.
    */
   async deleteFile(projectName: string, fileName: string): Promise<boolean> {
     // Read file content before deletion for history
@@ -93,19 +99,20 @@ export class HistoryTrackingFileRepository implements FileRepository {
       return false;
     }
 
-    // Delete the file using wrapped repository
-    const deleted = await this.wrappedRepository.deleteFile(projectName, fileName);
+    // Record history FIRST to ensure content is preserved even if deletion succeeds
+    // but subsequent operations fail. This prevents unrecoverable data loss.
+    await this.historyRepository.recordHistory({
+      action: "deleted",
+      actor: this.actor,
+      projectName,
+      fileName,
+      content,
+    });
 
-    // Only record history if the deletion was successful
-    if (deleted) {
-      await this.historyRepository.recordHistory({
-        action: "deleted",
-        actor: this.actor,
-        projectName,
-        fileName,
-        content,
-      });
-    }
+    // Delete the file using wrapped repository
+    // If this fails, we have a history record but file still exists - minor inconsistency
+    // but far better than losing the file without history
+    const deleted = await this.wrappedRepository.deleteFile(projectName, fileName);
 
     return deleted;
   }
