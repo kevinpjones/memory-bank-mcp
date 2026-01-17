@@ -3,9 +3,9 @@ import { Validator } from "../presentation/protocols/validator.js";
 
 /**
  * Reserved directory names that cannot be used as project names
- * These are used internally by the system for history tracking and archiving
+ * These are used internally by the system for history tracking, archiving, and locking
  */
-const RESERVED_NAMES = [".history", ".archive"];
+const RESERVED_NAMES = [".history", ".archive", ".locks"];
 
 /**
  * Validates that a field does not contain a reserved directory name.

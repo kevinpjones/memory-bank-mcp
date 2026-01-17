@@ -32,7 +32,7 @@ describe("ReservedNameValidator", () => {
 
     expect(error).toBeInstanceOf(InvalidParamError);
     expect(error?.message).toBe(
-      "Invalid parameter: projectName cannot be a reserved name (.history, .archive)"
+      "Invalid parameter: projectName cannot be a reserved name (.history, .archive, .locks)"
     );
   });
 
@@ -43,7 +43,18 @@ describe("ReservedNameValidator", () => {
 
     expect(error).toBeInstanceOf(InvalidParamError);
     expect(error?.message).toBe(
-      "Invalid parameter: projectName cannot be a reserved name (.history, .archive)"
+      "Invalid parameter: projectName cannot be a reserved name (.history, .archive, .locks)"
+    );
+  });
+
+  it("should return InvalidParamError if field is '.locks'", () => {
+    const sut = new ReservedNameValidator("projectName");
+    const input = { projectName: ".locks" };
+    const error = sut.validate(input);
+
+    expect(error).toBeInstanceOf(InvalidParamError);
+    expect(error?.message).toBe(
+      "Invalid parameter: projectName cannot be a reserved name (.history, .archive, .locks)"
     );
   });
 
@@ -99,7 +110,7 @@ describe("ReservedNameValidator", () => {
 
     expect(error).toBeInstanceOf(InvalidParamError);
     expect(error?.message).toBe(
-      "Invalid parameter: customField cannot be a reserved name (.history, .archive)"
+      "Invalid parameter: customField cannot be a reserved name (.history, .archive, .locks)"
     );
   });
 });
