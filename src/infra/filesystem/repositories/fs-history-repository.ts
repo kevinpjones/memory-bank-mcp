@@ -121,8 +121,8 @@ export class FsHistoryRepository implements HistoryRepository {
     const allEntries: HistoryEntry[] = [];
 
     for (const historyFile of historyFiles) {
-      // Extract original filename from history filename
-      const fileName = historyFile.replace(".history.jsonl", "");
+      // Extract original filename from history filename (use regex with end anchor to handle filenames containing .history.jsonl)
+      const fileName = historyFile.replace(/\.history\.jsonl$/, "");
       const fileHistory = await this.getFileHistory(projectName, fileName);
       allEntries.push(...fileHistory);
     }
