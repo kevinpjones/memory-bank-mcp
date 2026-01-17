@@ -5,17 +5,25 @@ import os from "os";
 import { FsFileRepository } from "../../../../src/infra/filesystem/repositories/fs-file-repository.js";
 import { FsHistoryRepository } from "../../../../src/infra/filesystem/repositories/fs-history-repository.js";
 import { HistoryTrackingFileRepository } from "../../../../src/infra/filesystem/repositories/history-tracking-file-repository.js";
+import { LockService } from "../../../../src/data/protocols/lock-service.js";
+
+// Mock lock service for testing - provides no-op locking
+const createMockLockService = (): LockService => ({
+  acquireLock: async () => async () => {},
+});
 
 describe("HistoryTrackingFileRepository", () => {
   let testDir: string;
   let baseFileRepository: FsFileRepository;
   let historyRepository: FsHistoryRepository;
   let repository: HistoryTrackingFileRepository;
+  let mockLockService: LockService;
 
   beforeEach(async () => {
     testDir = await fs.mkdtemp(path.join(os.tmpdir(), "history-tracking-test-"));
     baseFileRepository = new FsFileRepository(testDir);
-    historyRepository = new FsHistoryRepository(testDir);
+    mockLockService = createMockLockService();
+    historyRepository = new FsHistoryRepository(testDir, mockLockService);
     repository = new HistoryTrackingFileRepository(baseFileRepository, historyRepository, "test-actor");
   });
 

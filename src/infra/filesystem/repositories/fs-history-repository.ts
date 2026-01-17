@@ -1,6 +1,7 @@
 import fs from "fs-extra";
 import path from "path";
 import { HistoryRepository } from "../../../data/protocols/history-repository.js";
+import { LockService } from "../../../data/protocols/lock-service.js";
 import {
   HistoryEntry,
   RecordHistoryParams,
@@ -18,8 +19,12 @@ export class FsHistoryRepository implements HistoryRepository {
   /**
    * Creates a new FsHistoryRepository
    * @param rootDir The root directory where all projects are stored
+   * @param lockService The lock service for preventing race conditions
    */
-  constructor(private readonly rootDir: string) {
+  constructor(
+    private readonly rootDir: string,
+    private readonly lockService: LockService
+  ) {
     this.historyDir = path.join(rootDir, ".history");
   }
 
@@ -52,32 +57,41 @@ export class FsHistoryRepository implements HistoryRepository {
 
   /**
    * Records a history entry for a file change
+   * Uses per-project locking to prevent race conditions in version assignment
    */
   async recordHistory(params: RecordHistoryParams): Promise<void> {
     const { action, actor, projectName, fileName, content } = params;
 
-    // Calculate the next version number for the project (project-wide versioning)
-    const version = await this.getNextVersion(projectName);
+    // Acquire lock to prevent concurrent version assignment
+    const releaseLock = await this.lockService.acquireLock(projectName);
+    
+    try {
+      // Calculate the next version number for the project (project-wide versioning)
+      const version = await this.getNextVersion(projectName);
 
-    const entry: HistoryEntry = {
-      version,
-      timestamp: new Date().toISOString(),
-      action,
-      actor,
-      projectName,
-      fileName,
-      content,
-    };
+      const entry: HistoryEntry = {
+        version,
+        timestamp: new Date().toISOString(),
+        action,
+        actor,
+        projectName,
+        fileName,
+        content,
+      };
 
-    const historyFilePath = this.getHistoryFilePath(projectName, fileName);
-    const historyDir = path.dirname(historyFilePath);
+      const historyFilePath = this.getHistoryFilePath(projectName, fileName);
+      const historyDir = path.dirname(historyFilePath);
 
-    // Ensure history directory exists
-    await fs.ensureDir(historyDir);
+      // Ensure history directory exists
+      await fs.ensureDir(historyDir);
 
-    // Append entry as a JSON line
-    const jsonLine = JSON.stringify(entry) + "\n";
-    await fs.appendFile(historyFilePath, jsonLine, "utf-8");
+      // Append entry as a JSON line
+      const jsonLine = JSON.stringify(entry) + "\n";
+      await fs.appendFile(historyFilePath, jsonLine, "utf-8");
+    } finally {
+      // Always release the lock, even if an error occurs
+      await releaseLock();
+    }
   }
 
   /**

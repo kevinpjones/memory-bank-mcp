@@ -3,14 +3,22 @@ import fs from "fs-extra";
 import path from "path";
 import os from "os";
 import { FsHistoryRepository } from "../../../../src/infra/filesystem/repositories/fs-history-repository.js";
+import { LockService } from "../../../../src/data/protocols/lock-service.js";
+
+// Mock lock service for testing - provides no-op locking
+const createMockLockService = (): LockService => ({
+  acquireLock: async () => async () => {},
+});
 
 describe("FsHistoryRepository", () => {
   let testDir: string;
   let repository: FsHistoryRepository;
+  let mockLockService: LockService;
 
   beforeEach(async () => {
     testDir = await fs.mkdtemp(path.join(os.tmpdir(), "history-test-"));
-    repository = new FsHistoryRepository(testDir);
+    mockLockService = createMockLockService();
+    repository = new FsHistoryRepository(testDir, mockLockService);
   });
 
   afterEach(async () => {
