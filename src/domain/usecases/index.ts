@@ -9,3 +9,4 @@ export * from "./list-prompts.js";
 export * from "./get-prompt.js";
 export * from "./get-file-history.js";
 export * from "./get-project-state-at-time.js";
+export * from "./get-file-history-diff.js";

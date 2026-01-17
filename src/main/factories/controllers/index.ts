@@ -9,4 +9,5 @@ export * from "./list-prompts/list-prompts-controller-factory.js";
 export * from "./get-prompt/get-prompt-controller-factory.js";
 export * from "./get-file-history/get-file-history-controller-factory.js";
 export * from "./get-project-state-at-time/get-project-state-at-time-controller-factory.js";
-// Exported as: makeGetProjectHistoryController, makeGetFileAtTimeController
+export * from "./get-file-history-diff/get-file-history-diff-controller-factory.js";
+// Exported as: makeGetProjectHistoryController, makeGetFileAtTimeController, makeGetFileHistoryDiffController

@@ -38,12 +38,29 @@ export class FsHistoryRepository implements HistoryRepository {
   }
 
   /**
+   * Gets the next version number for the project (project-wide sequential versioning)
+   */
+  private async getNextVersion(projectName: string): Promise<number> {
+    const projectHistory = await this.getProjectHistory(projectName);
+    if (projectHistory.length === 0) {
+      return 1;
+    }
+    // Get the maximum version number across all files in the project and add 1
+    const maxVersion = Math.max(...projectHistory.map(e => e.version ?? 0));
+    return maxVersion + 1;
+  }
+
+  /**
    * Records a history entry for a file change
    */
   async recordHistory(params: RecordHistoryParams): Promise<void> {
     const { action, actor, projectName, fileName, content } = params;
 
+    // Calculate the next version number for the project (project-wide versioning)
+    const version = await this.getNextVersion(projectName);
+
     const entry: HistoryEntry = {
+      version,
       timestamp: new Date().toISOString(),
       action,
       actor,
@@ -161,6 +178,7 @@ export class FsHistoryRepository implements HistoryRepository {
 
     // Map to metadata (exclude content)
     return projectHistory.map(entry => ({
+      version: entry.version,
       timestamp: entry.timestamp,
       action: entry.action,
       actor: entry.actor,
@@ -193,5 +211,26 @@ export class FsHistoryRepository implements HistoryRepository {
     }
 
     return lastEntry.content;
+  }
+
+  /**
+   * Gets the content of a specific file at a specific version
+   */
+  async getFileByVersion(projectName: string, fileName: string, version: number): Promise<string | null> {
+    const fileHistory = await this.getFileHistory(projectName, fileName);
+
+    // Find the entry with the specified version
+    const entry = fileHistory.find(e => e.version === version);
+
+    if (!entry) {
+      return null;
+    }
+
+    // If the file was deleted at this version, return null
+    if (entry.action === "deleted") {
+      return null;
+    }
+
+    return entry.content;
   }
 }

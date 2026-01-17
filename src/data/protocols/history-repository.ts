@@ -54,4 +54,13 @@ export interface HistoryRepository {
    * @returns The project state at the specified time
    */
   getStateAtTime(projectName: string, timestamp: string): Promise<ProjectStateAtTime>;
+
+  /**
+   * Gets the content of a specific file at a specific version
+   * @param projectName The name of the project
+   * @param fileName The name of the file
+   * @param version The version number to retrieve (1-based)
+   * @returns The file content at the specified version, or null if version doesn't exist
+   */
+  getFileByVersion(projectName: string, fileName: string, version: number): Promise<string | null>;
 }

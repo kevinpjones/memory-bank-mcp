@@ -12,6 +12,8 @@ export type HistoryAction = "created" | "modified" | "deleted";
  * A history entry representing a single change to a Memory Bank file
  */
 export interface HistoryEntry {
+  /** Sequential version number for this file (1-based, increments with each change) */
+  version: number;
   /** ISO 8601 timestamp of when the change occurred */
   timestamp: string;
   /** Type of action performed */

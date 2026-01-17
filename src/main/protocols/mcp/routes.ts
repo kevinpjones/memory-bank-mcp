@@ -10,6 +10,7 @@ import {
   makeGetPromptController,
   makeGetProjectHistoryController,
   makeGetFileAtTimeController,
+  makeGetFileHistoryDiffController,
 } from "../../factories/controllers/index.js";
 import { adaptMcpRequestHandler } from "./adapters/mcp-request-adapter.js";
 import { adaptMcpListPromptsHandler, adaptMcpGetPromptHandler } from "./adapters/mcp-prompt-adapter.js";
@@ -250,6 +251,37 @@ export default () => {
       },
     },
     handler: adaptMcpRequestHandler(makeGetFileAtTimeController()),
+  });
+
+  router.setTool({
+    schema: {
+      name: "get_project_file_history_diff",
+      title: "Get File History Diff",
+      description: "Generate a unified diff between two versions of a file. Returns standard unified diff format (similar to git diff) showing additions, deletions, and context lines.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          projectName: {
+            type: "string",
+            description: "The name of the project",
+          },
+          fileName: {
+            type: "string",
+            description: "The name of the file to diff",
+          },
+          versionFrom: {
+            type: "integer",
+            description: "Source version number (1-based)",
+          },
+          versionTo: {
+            type: "integer",
+            description: "Target version number (1-based, optional - defaults to current/latest version)",
+          },
+        },
+        required: ["projectName", "fileName", "versionFrom"],
+      },
+    },
+    handler: adaptMcpRequestHandler(makeGetFileHistoryDiffController()),
   });
 
   // Prompt endpoints

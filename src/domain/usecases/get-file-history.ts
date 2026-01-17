@@ -8,6 +8,8 @@ export interface GetProjectHistoryParams {
  * History entry metadata without content for efficient listing
  */
 export interface HistoryEntryMetadata {
+  /** Sequential version number for this file (1-based) */
+  version: number;
   timestamp: string;
   action: HistoryEntry["action"];
   actor: string;
