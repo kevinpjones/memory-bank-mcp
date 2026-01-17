@@ -8,6 +8,8 @@ import {
   makeWriteController,
   makeListPromptsController,
   makeGetPromptController,
+  makeGetFileHistoryController,
+  makeGetProjectStateAtTimeController,
 } from "../../factories/controllers/index.js";
 import { adaptMcpRequestHandler } from "./adapters/mcp-request-adapter.js";
 import { adaptMcpListPromptsHandler, adaptMcpGetPromptHandler } from "./adapters/mcp-prompt-adapter.js";
@@ -202,6 +204,52 @@ export default () => {
       },
     },
     handler: adaptMcpRequestHandler(makePatchController()),
+  });
+
+  router.setTool({
+    schema: {
+      name: "get_file_history",
+      title: "Get File History",
+      description: "Get the change history for a specific memory bank file. Returns all historical changes including creations, modifications, and deletions with timestamps and content.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          projectName: {
+            type: "string",
+            description: "The name of the project",
+          },
+          fileName: {
+            type: "string",
+            description: "The name of the file to get history for",
+          },
+        },
+        required: ["projectName", "fileName"],
+      },
+    },
+    handler: adaptMcpRequestHandler(makeGetFileHistoryController()),
+  });
+
+  router.setTool({
+    schema: {
+      name: "get_project_state_at_time",
+      title: "Get Project State At Time",
+      description: "Reconstruct the complete state of a project's memory bank at a specific point in time. Returns all files as they existed at the specified timestamp.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          projectName: {
+            type: "string",
+            description: "The name of the project",
+          },
+          timestamp: {
+            type: "string",
+            description: "ISO 8601 timestamp to reconstruct the project state at (e.g., '2024-01-15T10:30:00.000Z')",
+          },
+        },
+        required: ["projectName", "timestamp"],
+      },
+    },
+    handler: adaptMcpRequestHandler(makeGetProjectStateAtTimeController()),
   });
 
   // Prompt endpoints

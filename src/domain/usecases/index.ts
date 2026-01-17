@@ -7,3 +7,5 @@ export * from "./patch-file.js";
 export * from "./delete-file.js";
 export * from "./list-prompts.js";
 export * from "./get-prompt.js";
+export * from "./get-file-history.js";
+export * from "./get-project-state-at-time.js";
