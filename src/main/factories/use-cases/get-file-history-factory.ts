@@ -1,8 +1,8 @@
-import { GetFileHistory } from "../../../data/usecases/get-file-history/get-file-history.js";
+import { GetProjectHistory } from "../../../data/usecases/get-file-history/get-file-history.js";
 import { FsHistoryRepository } from "../../../infra/filesystem/index.js";
 import { env } from "../../config/env.js";
 
-export const makeGetFileHistory = () => {
+export const makeGetProjectHistory = () => {
   const historyRepository = new FsHistoryRepository(env.rootPath);
-  return new GetFileHistory(historyRepository);
+  return new GetProjectHistory(historyRepository);
 };

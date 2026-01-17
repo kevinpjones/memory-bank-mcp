@@ -8,8 +8,8 @@ import {
   makeWriteController,
   makeListPromptsController,
   makeGetPromptController,
-  makeGetFileHistoryController,
-  makeGetProjectStateAtTimeController,
+  makeGetProjectHistoryController,
+  makeGetFileAtTimeController,
 } from "../../factories/controllers/index.js";
 import { adaptMcpRequestHandler } from "./adapters/mcp-request-adapter.js";
 import { adaptMcpListPromptsHandler, adaptMcpGetPromptHandler } from "./adapters/mcp-prompt-adapter.js";
@@ -208,9 +208,28 @@ export default () => {
 
   router.setTool({
     schema: {
-      name: "get_file_history",
-      title: "Get File History",
-      description: "Get the change history for a specific memory bank file. Returns all historical changes including creations, modifications, and deletions with timestamps and content.",
+      name: "get_project_history",
+      title: "Get Project History",
+      description: "Get the change history for all files in a project. Returns metadata (timestamp, action, actor, fileName) for all historical changes without file content for efficient browsing.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          projectName: {
+            type: "string",
+            description: "The name of the project to get history for",
+          },
+        },
+        required: ["projectName"],
+      },
+    },
+    handler: adaptMcpRequestHandler(makeGetProjectHistoryController()),
+  });
+
+  router.setTool({
+    schema: {
+      name: "get_file_at_time",
+      title: "Get File At Time",
+      description: "Retrieve the content of a specific file at a specific point in time. Use this after browsing project history to get the actual content of a file at a particular timestamp.",
       inputSchema: {
         type: "object",
         properties: {
@@ -220,36 +239,17 @@ export default () => {
           },
           fileName: {
             type: "string",
-            description: "The name of the file to get history for",
-          },
-        },
-        required: ["projectName", "fileName"],
-      },
-    },
-    handler: adaptMcpRequestHandler(makeGetFileHistoryController()),
-  });
-
-  router.setTool({
-    schema: {
-      name: "get_project_state_at_time",
-      title: "Get Project State At Time",
-      description: "Reconstruct the complete state of a project's memory bank at a specific point in time. Returns all files as they existed at the specified timestamp.",
-      inputSchema: {
-        type: "object",
-        properties: {
-          projectName: {
-            type: "string",
-            description: "The name of the project",
+            description: "The name of the file to retrieve",
           },
           timestamp: {
             type: "string",
-            description: "ISO 8601 timestamp to reconstruct the project state at (e.g., '2024-01-15T10:30:00.000Z')",
+            description: "ISO 8601 timestamp to get the file content at (e.g., '2024-01-15T10:30:00.000Z')",
           },
         },
-        required: ["projectName", "timestamp"],
+        required: ["projectName", "fileName", "timestamp"],
       },
     },
-    handler: adaptMcpRequestHandler(makeGetProjectStateAtTimeController()),
+    handler: adaptMcpRequestHandler(makeGetFileAtTimeController()),
   });
 
   // Prompt endpoints

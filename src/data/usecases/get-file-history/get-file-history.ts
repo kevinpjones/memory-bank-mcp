@@ -1,15 +1,15 @@
 import {
   HistoryRepository,
-  HistoryEntry,
-  GetFileHistoryParams,
-  GetFileHistoryUseCase,
+  HistoryEntryMetadata,
+  GetProjectHistoryParams,
+  GetProjectHistoryUseCase,
 } from "./get-file-history-protocols.js";
 
-export class GetFileHistory implements GetFileHistoryUseCase {
+export class GetProjectHistory implements GetProjectHistoryUseCase {
   constructor(private readonly historyRepository: HistoryRepository) {}
 
-  async getFileHistory(params: GetFileHistoryParams): Promise<HistoryEntry[]> {
-    const { projectName, fileName } = params;
-    return this.historyRepository.getFileHistory(projectName, fileName);
+  async getProjectHistory(params: GetProjectHistoryParams): Promise<HistoryEntryMetadata[]> {
+    const { projectName } = params;
+    return this.historyRepository.getProjectHistoryMetadata(projectName);
   }
 }

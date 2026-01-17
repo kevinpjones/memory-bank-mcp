@@ -163,6 +163,153 @@ describe("FsHistoryRepository", () => {
     });
   });
 
+  describe("getProjectHistoryMetadata", () => {
+    it("should return empty array for non-existent project", async () => {
+      const history = await repository.getProjectHistoryMetadata("non-existent");
+      expect(history).toEqual([]);
+    });
+
+    it("should return metadata without content", async () => {
+      await repository.recordHistory({
+        action: "created",
+        actor: "test-actor",
+        projectName: "test-project",
+        fileName: "test-file.md",
+        content: "this content should not be in metadata",
+      });
+
+      const history = await repository.getProjectHistoryMetadata("test-project");
+
+      expect(history.length).toBe(1);
+      expect(history[0].timestamp).toBeDefined();
+      expect(history[0].action).toBe("created");
+      expect(history[0].actor).toBe("test-actor");
+      expect(history[0].fileName).toBe("test-file.md");
+      expect((history[0] as any).content).toBeUndefined();
+    });
+
+    it("should return metadata for all files in project", async () => {
+      await repository.recordHistory({
+        action: "created",
+        actor: "actor1",
+        projectName: "test-project",
+        fileName: "file1.md",
+        content: "content 1",
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      await repository.recordHistory({
+        action: "created",
+        actor: "actor2",
+        projectName: "test-project",
+        fileName: "file2.md",
+        content: "content 2",
+      });
+
+      const history = await repository.getProjectHistoryMetadata("test-project");
+
+      expect(history.length).toBe(2);
+      expect(history[0].fileName).toBe("file1.md");
+      expect(history[1].fileName).toBe("file2.md");
+    });
+  });
+
+  describe("getFileAtTime", () => {
+    it("should return null for non-existent file", async () => {
+      const content = await repository.getFileAtTime("test-project", "non-existent.md", new Date().toISOString());
+      expect(content).toBeNull();
+    });
+
+    it("should return file content at specific timestamp", async () => {
+      await repository.recordHistory({
+        action: "created",
+        actor: "actor1",
+        projectName: "test-project",
+        fileName: "test-file.md",
+        content: "version 1",
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 50));
+      const afterV1 = new Date().toISOString();
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      await repository.recordHistory({
+        action: "modified",
+        actor: "actor1",
+        projectName: "test-project",
+        fileName: "test-file.md",
+        content: "version 2",
+      });
+
+      // Get content at time when it was version 1
+      const content = await repository.getFileAtTime("test-project", "test-file.md", afterV1);
+      expect(content).toBe("version 1");
+    });
+
+    it("should return null for deleted file", async () => {
+      await repository.recordHistory({
+        action: "created",
+        actor: "actor1",
+        projectName: "test-project",
+        fileName: "test-file.md",
+        content: "content",
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      await repository.recordHistory({
+        action: "deleted",
+        actor: "actor1",
+        projectName: "test-project",
+        fileName: "test-file.md",
+        content: "content",
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 10));
+      const afterDelete = new Date().toISOString();
+
+      const content = await repository.getFileAtTime("test-project", "test-file.md", afterDelete);
+      expect(content).toBeNull();
+    });
+
+    it("should return content for recreated file after deletion", async () => {
+      await repository.recordHistory({
+        action: "created",
+        actor: "actor1",
+        projectName: "test-project",
+        fileName: "test-file.md",
+        content: "original",
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      await repository.recordHistory({
+        action: "deleted",
+        actor: "actor1",
+        projectName: "test-project",
+        fileName: "test-file.md",
+        content: "original",
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      await repository.recordHistory({
+        action: "created",
+        actor: "actor1",
+        projectName: "test-project",
+        fileName: "test-file.md",
+        content: "recreated",
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 10));
+      const afterRecreate = new Date().toISOString();
+
+      const content = await repository.getFileAtTime("test-project", "test-file.md", afterRecreate);
+      expect(content).toBe("recreated");
+    });
+  });
+
   describe("getStateAtTime", () => {
     it("should return empty state for non-existent project", async () => {
       const state = await repository.getStateAtTime("non-existent", new Date().toISOString());

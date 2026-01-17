@@ -1,8 +1,8 @@
 import {
-  GetFileHistoryParams,
-  GetFileHistoryUseCase,
+  GetProjectHistoryParams,
+  GetProjectHistoryUseCase,
+  HistoryEntryMetadata,
 } from "../../../domain/usecases/index.js";
-import { HistoryEntry } from "../../../domain/entities/index.js";
 import { HistoryRepository } from "../../protocols/index.js";
 
-export type { HistoryRepository, HistoryEntry, GetFileHistoryParams, GetFileHistoryUseCase };
+export type { HistoryRepository, HistoryEntryMetadata, GetProjectHistoryParams, GetProjectHistoryUseCase };

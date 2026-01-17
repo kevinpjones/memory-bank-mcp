@@ -1,5 +1,4 @@
-import { GetProjectStateAtTimeUseCase } from "../../../domain/usecases/get-project-state-at-time.js";
-import { ProjectStateAtTime } from "../../../domain/entities/index.js";
+import { GetFileAtTimeUseCase, GetFileAtTimeResult } from "../../../domain/usecases/get-project-state-at-time.js";
 import {
   Controller,
   Request,
@@ -7,31 +6,36 @@ import {
   Validator,
 } from "../../protocols/index.js";
 
-export interface GetProjectStateAtTimeRequest {
+export interface GetFileAtTimeRequest {
   /**
-   * The name of the project to reconstruct state for.
+   * The name of the project containing the file.
    */
   projectName: string;
 
   /**
-   * ISO 8601 timestamp to reconstruct the project state at.
+   * The name of the file to retrieve.
+   */
+  fileName: string;
+
+  /**
+   * ISO 8601 timestamp to get the file content at.
    */
   timestamp: string;
 }
 
 /**
- * Response containing the reconstructed project state.
- * Files map contains file names to their content at the specified time.
+ * Response containing the file content at the specified time.
  */
-export interface GetProjectStateAtTimeResponse {
+export interface GetFileAtTimeResponse {
   timestamp: string;
-  files: Record<string, string>;
+  content: string | null;
+  exists: boolean;
 }
 
 export type {
   Controller,
-  GetProjectStateAtTimeUseCase,
-  ProjectStateAtTime,
+  GetFileAtTimeUseCase,
+  GetFileAtTimeResult,
   Request,
   Response,
   Validator,

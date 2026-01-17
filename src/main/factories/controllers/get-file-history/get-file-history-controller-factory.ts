@@ -1,10 +1,10 @@
-import { GetFileHistoryController } from "../../../../presentation/controllers/get-file-history/get-file-history-controller.js";
-import { makeGetFileHistory } from "../../use-cases/get-file-history-factory.js";
-import { makeGetFileHistoryValidation } from "./get-file-history-validation-factory.js";
+import { GetProjectHistoryController } from "../../../../presentation/controllers/get-file-history/get-file-history-controller.js";
+import { makeGetProjectHistory } from "../../use-cases/get-file-history-factory.js";
+import { makeGetProjectHistoryValidation } from "./get-file-history-validation-factory.js";
 
-export const makeGetFileHistoryController = () => {
-  const validator = makeGetFileHistoryValidation();
-  const getFileHistoryUseCase = makeGetFileHistory();
+export const makeGetProjectHistoryController = () => {
+  const validator = makeGetProjectHistoryValidation();
+  const getProjectHistoryUseCase = makeGetProjectHistory();
 
-  return new GetFileHistoryController(getFileHistoryUseCase, validator);
+  return new GetProjectHistoryController(getProjectHistoryUseCase, validator);
 };

@@ -1,43 +1,39 @@
 import { badRequest, ok, serverError } from "../../helpers/index.js";
 import {
   Controller,
-  GetProjectStateAtTimeUseCase,
-  GetProjectStateAtTimeRequest,
-  GetProjectStateAtTimeResponse,
+  GetFileAtTimeUseCase,
+  GetFileAtTimeRequest,
+  GetFileAtTimeResponse,
   Request,
   Response,
   Validator,
 } from "./protocols.js";
 
-export class GetProjectStateAtTimeController implements Controller<GetProjectStateAtTimeRequest, GetProjectStateAtTimeResponse> {
+export class GetFileAtTimeController implements Controller<GetFileAtTimeRequest, GetFileAtTimeResponse> {
   constructor(
-    private readonly getProjectStateAtTimeUseCase: GetProjectStateAtTimeUseCase,
+    private readonly getFileAtTimeUseCase: GetFileAtTimeUseCase,
     private readonly validator: Validator
   ) {}
 
-  async handle(request: Request<GetProjectStateAtTimeRequest>): Promise<Response<GetProjectStateAtTimeResponse>> {
+  async handle(request: Request<GetFileAtTimeRequest>): Promise<Response<GetFileAtTimeResponse>> {
     try {
       const validationError = this.validator.validate(request.body);
       if (validationError) {
         return badRequest(validationError);
       }
 
-      const { projectName, timestamp } = request.body!;
+      const { projectName, fileName, timestamp } = request.body!;
 
-      const state = await this.getProjectStateAtTimeUseCase.getProjectStateAtTime({
+      const result = await this.getFileAtTimeUseCase.getFileAtTime({
         projectName,
+        fileName,
         timestamp,
       });
 
-      // Convert Map to Record for JSON serialization
-      const filesRecord: Record<string, string> = {};
-      for (const [fileName, content] of state.files) {
-        filesRecord[fileName] = content;
-      }
-
-      const response: GetProjectStateAtTimeResponse = {
-        timestamp: state.timestamp,
-        files: filesRecord,
+      const response: GetFileAtTimeResponse = {
+        timestamp: result.timestamp,
+        content: result.content,
+        exists: result.exists,
       };
 
       return ok(response);

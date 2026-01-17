@@ -6,6 +6,7 @@ import {
   RecordHistoryParams,
   ProjectStateAtTime,
 } from "../../../domain/entities/index.js";
+import { HistoryEntryMetadata } from "../../../domain/usecases/get-file-history.js";
 
 /**
  * Filesystem implementation of the HistoryRepository protocol
@@ -150,5 +151,47 @@ export class FsHistoryRepository implements HistoryRepository {
       timestamp,
       files,
     };
+  }
+
+  /**
+   * Gets the history metadata (without content) for all files in a project
+   */
+  async getProjectHistoryMetadata(projectName: string): Promise<HistoryEntryMetadata[]> {
+    const projectHistory = await this.getProjectHistory(projectName);
+
+    // Map to metadata (exclude content)
+    return projectHistory.map(entry => ({
+      timestamp: entry.timestamp,
+      action: entry.action,
+      actor: entry.actor,
+      fileName: entry.fileName,
+    }));
+  }
+
+  /**
+   * Gets the content of a specific file at a specific point in time
+   */
+  async getFileAtTime(projectName: string, fileName: string, timestamp: string): Promise<string | null> {
+    const targetTime = new Date(timestamp).getTime();
+    const fileHistory = await this.getFileHistory(projectName, fileName);
+
+    // Filter entries up to and including the target timestamp
+    const relevantEntries = fileHistory.filter(
+      entry => new Date(entry.timestamp).getTime() <= targetTime
+    );
+
+    if (relevantEntries.length === 0) {
+      return null;
+    }
+
+    // Get the last entry (most recent state at or before timestamp)
+    const lastEntry = relevantEntries[relevantEntries.length - 1];
+
+    // If the file was deleted, return null
+    if (lastEntry.action === "deleted") {
+      return null;
+    }
+
+    return lastEntry.content;
   }
 }

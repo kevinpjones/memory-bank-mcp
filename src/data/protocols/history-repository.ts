@@ -3,6 +3,7 @@ import {
   RecordHistoryParams,
   ProjectStateAtTime,
 } from "../../domain/entities/index.js";
+import { HistoryEntryMetadata } from "../../domain/usecases/get-file-history.js";
 
 /**
  * Repository interface for Memory Bank file history tracking
@@ -29,6 +30,22 @@ export interface HistoryRepository {
    * @returns Array of history entries for all files in the project, sorted by timestamp ascending
    */
   getProjectHistory(projectName: string): Promise<HistoryEntry[]>;
+
+  /**
+   * Gets the history metadata (without content) for all files in a project
+   * @param projectName The name of the project
+   * @returns Array of history entry metadata, sorted by timestamp ascending
+   */
+  getProjectHistoryMetadata(projectName: string): Promise<HistoryEntryMetadata[]>;
+
+  /**
+   * Gets the content of a specific file at a specific point in time
+   * @param projectName The name of the project
+   * @param fileName The name of the file
+   * @param timestamp ISO 8601 timestamp to get the file content at
+   * @returns The file content at the specified time, or null if file didn't exist
+   */
+  getFileAtTime(projectName: string, fileName: string, timestamp: string): Promise<string | null>;
 
   /**
    * Reconstructs the complete project state at a specific point in time

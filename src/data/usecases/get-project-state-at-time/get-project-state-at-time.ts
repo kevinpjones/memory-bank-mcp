@@ -1,15 +1,21 @@
 import {
   HistoryRepository,
-  ProjectStateAtTime,
-  GetProjectStateAtTimeParams,
-  GetProjectStateAtTimeUseCase,
+  GetFileAtTimeParams,
+  GetFileAtTimeResult,
+  GetFileAtTimeUseCase,
 } from "./get-project-state-at-time-protocols.js";
 
-export class GetProjectStateAtTime implements GetProjectStateAtTimeUseCase {
+export class GetFileAtTime implements GetFileAtTimeUseCase {
   constructor(private readonly historyRepository: HistoryRepository) {}
 
-  async getProjectStateAtTime(params: GetProjectStateAtTimeParams): Promise<ProjectStateAtTime> {
-    const { projectName, timestamp } = params;
-    return this.historyRepository.getStateAtTime(projectName, timestamp);
+  async getFileAtTime(params: GetFileAtTimeParams): Promise<GetFileAtTimeResult> {
+    const { projectName, fileName, timestamp } = params;
+    const content = await this.historyRepository.getFileAtTime(projectName, fileName, timestamp);
+    
+    return {
+      timestamp,
+      content,
+      exists: content !== null,
+    };
   }
 }

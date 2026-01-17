@@ -8,12 +8,14 @@ import { PathSecurityValidator } from "../../../../validators/path-security-vali
 const makeValidations = (): Validator[] => {
   return [
     new RequiredFieldValidator("projectName"),
+    new RequiredFieldValidator("fileName"),
     new RequiredFieldValidator("timestamp"),
     new PathSecurityValidator("projectName"),
+    new PathSecurityValidator("fileName"),
   ];
 };
 
-export const makeGetProjectStateAtTimeValidation = (): Validator => {
+export const makeGetFileAtTimeValidation = (): Validator => {
   const validations = makeValidations();
   return new ValidatorComposite(validations);
 };

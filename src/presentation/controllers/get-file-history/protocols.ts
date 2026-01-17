@@ -1,5 +1,4 @@
-import { GetFileHistoryUseCase } from "../../../domain/usecases/get-file-history.js";
-import { HistoryEntry } from "../../../domain/entities/index.js";
+import { GetProjectHistoryUseCase, HistoryEntryMetadata } from "../../../domain/usecases/get-file-history.js";
 import {
   Controller,
   Request,
@@ -7,24 +6,19 @@ import {
   Validator,
 } from "../../protocols/index.js";
 
-export interface GetFileHistoryRequest {
+export interface GetProjectHistoryRequest {
   /**
-   * The name of the project containing the file.
+   * The name of the project to get history for.
    */
   projectName: string;
-
-  /**
-   * The name of the file to get history for.
-   */
-  fileName: string;
 }
 
-export type GetFileHistoryResponse = HistoryEntry[];
+export type GetProjectHistoryResponse = HistoryEntryMetadata[];
 
 export type {
   Controller,
-  GetFileHistoryUseCase,
-  HistoryEntry,
+  GetProjectHistoryUseCase,
+  HistoryEntryMetadata,
   Request,
   Response,
   Validator,
