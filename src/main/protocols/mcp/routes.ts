@@ -8,6 +8,9 @@ import {
   makeWriteController,
   makeListPromptsController,
   makeGetPromptController,
+  makeGetProjectHistoryController,
+  makeGetFileAtTimeController,
+  makeGetFileHistoryDiffController,
 } from "../../factories/controllers/index.js";
 import { adaptMcpRequestHandler } from "./adapters/mcp-request-adapter.js";
 import { adaptMcpListPromptsHandler, adaptMcpGetPromptHandler } from "./adapters/mcp-prompt-adapter.js";
@@ -202,6 +205,83 @@ export default () => {
       },
     },
     handler: adaptMcpRequestHandler(makePatchController()),
+  });
+
+  router.setTool({
+    schema: {
+      name: "get_project_history",
+      title: "Get Project History",
+      description: "Get the change history for all files in a project. Returns metadata (timestamp, action, actor, fileName) for all historical changes without file content for efficient browsing.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          projectName: {
+            type: "string",
+            description: "The name of the project to get history for",
+          },
+        },
+        required: ["projectName"],
+      },
+    },
+    handler: adaptMcpRequestHandler(makeGetProjectHistoryController()),
+  });
+
+  router.setTool({
+    schema: {
+      name: "get_file_at_time",
+      title: "Get File At Time",
+      description: "Retrieve the content of a specific file at a specific point in time. Use this after browsing project history to get the actual content of a file at a particular timestamp.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          projectName: {
+            type: "string",
+            description: "The name of the project",
+          },
+          fileName: {
+            type: "string",
+            description: "The name of the file to retrieve",
+          },
+          timestamp: {
+            type: "string",
+            description: "ISO 8601 timestamp to get the file content at (e.g., '2024-01-15T10:30:00.000Z')",
+          },
+        },
+        required: ["projectName", "fileName", "timestamp"],
+      },
+    },
+    handler: adaptMcpRequestHandler(makeGetFileAtTimeController()),
+  });
+
+  router.setTool({
+    schema: {
+      name: "get_project_file_history_diff",
+      title: "Get File History Diff",
+      description: "Generate a unified diff between two versions of a file. Returns standard unified diff format (similar to git diff) showing additions, deletions, and context lines.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          projectName: {
+            type: "string",
+            description: "The name of the project",
+          },
+          fileName: {
+            type: "string",
+            description: "The name of the file to diff",
+          },
+          versionFrom: {
+            type: "integer",
+            description: "Source version number (1-based)",
+          },
+          versionTo: {
+            type: "integer",
+            description: "Target version number (1-based, optional - defaults to current/latest version)",
+          },
+        },
+        required: ["projectName", "fileName", "versionFrom"],
+      },
+    },
+    handler: adaptMcpRequestHandler(makeGetFileHistoryDiffController()),
   });
 
   // Prompt endpoints

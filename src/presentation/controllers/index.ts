@@ -8,3 +8,6 @@ export * from "./update/index.js";
 export * from "./write/index.js";
 export * from "./list-prompts/index.js";
 export * from "./get-prompt/index.js";
+export * from "./get-file-history/index.js";
+export * from "./get-project-state-at-time/index.js";
+export * from "./get-file-history-diff/index.js";

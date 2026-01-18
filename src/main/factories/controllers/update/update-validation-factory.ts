@@ -2,6 +2,7 @@ import { Validator } from "../../../../presentation/protocols/validator.js";
 import {
   ParamNameValidator,
   RequiredFieldValidator,
+  ReservedNameValidator,
   ValidatorComposite,
 } from "../../../../validators/index.js";
 import { PathSecurityValidator } from "../../../../validators/path-security-validator.js";
@@ -15,6 +16,7 @@ const makeValidations = (): Validator[] => {
     new ParamNameValidator("fileName"),
     new PathSecurityValidator("projectName"),
     new PathSecurityValidator("fileName"),
+    new ReservedNameValidator("projectName"),
   ];
 };
 

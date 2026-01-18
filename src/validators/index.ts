@@ -1,5 +1,6 @@
 export * from "./defined-field-validator.js";
 export * from "./param-name-validator.js";
 export * from "./required-field-validator.js";
+export * from "./reserved-name-validator.js";
 export * from "./string-field-validator.js";
 export * from "./validator-composite.js";
