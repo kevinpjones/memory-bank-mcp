@@ -243,5 +243,78 @@ describe('/api/projects/[id]/archive', () => {
         expect.stringMatching(/\/test\/memory-bank\/\.archive\/My%20Special%20Project-ARCHIVED-/)
       );
     });
+
+    it('rolls back project move when history move fails', async () => {
+      // Arrange
+      const mockProjects = [
+        { name: 'test-project', fileCount: 5, lastModified: new Date() },
+      ];
+      
+      mockGetProjects.mockResolvedValue(mockProjects);
+      mockPathExists.mockResolvedValue(true); // History exists
+      
+      // First move (project) succeeds, second move (history) fails, third move (rollback) succeeds
+      mockMove
+        .mockResolvedValueOnce(undefined)  // Project move succeeds
+        .mockRejectedValueOnce(new Error('Disk full'))  // History move fails
+        .mockResolvedValueOnce(undefined); // Rollback succeeds
+      
+      const request = new NextRequest('http://localhost/api/projects/test-project/archive', {
+        method: 'POST',
+      });
+      
+      const params = Promise.resolve({ id: 'test-project' });
+
+      // Act
+      const response = await POST(request, { params });
+      const data = await response.json();
+
+      // Assert
+      expect(response.status).toBe(500);
+      expect(data).toEqual({
+        success: false,
+        error: 'Failed to archive project history',
+        message: 'Disk full',
+      });
+      
+      // Verify rollback was attempted (3 move calls: project, history, rollback)
+      expect(mockMove).toHaveBeenCalledTimes(3);
+    });
+
+    it('returns critical error when both history move and rollback fail', async () => {
+      // Arrange
+      const mockProjects = [
+        { name: 'test-project', fileCount: 5, lastModified: new Date() },
+      ];
+      
+      mockGetProjects.mockResolvedValue(mockProjects);
+      mockPathExists.mockResolvedValue(true); // History exists
+      
+      // First move (project) succeeds, second move (history) fails, third move (rollback) also fails
+      mockMove
+        .mockResolvedValueOnce(undefined)  // Project move succeeds
+        .mockRejectedValueOnce(new Error('Disk full'))  // History move fails
+        .mockRejectedValueOnce(new Error('Permission denied')); // Rollback fails
+      
+      const request = new NextRequest('http://localhost/api/projects/test-project/archive', {
+        method: 'POST',
+      });
+      
+      const params = Promise.resolve({ id: 'test-project' });
+
+      // Act
+      const response = await POST(request, { params });
+      const data = await response.json();
+
+      // Assert
+      expect(response.status).toBe(500);
+      expect(data.success).toBe(false);
+      expect(data.error).toBe('Critical archive failure');
+      expect(data.message).toContain('Manual intervention required');
+      expect(data.message).toContain('test-project-ARCHIVED-');
+      
+      // Verify all 3 move calls were made
+      expect(mockMove).toHaveBeenCalledTimes(3);
+    });
   });
 });

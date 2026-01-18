@@ -53,8 +53,38 @@ export async function POST(
     await fs.move(projectPath, archivePath);
 
     // Move project history to archive (if it exists)
-    if (await fs.pathExists(historyPath)) {
-      await fs.move(historyPath, archivedHistoryPath);
+    // If this fails, we need to rollback the project move to avoid orphaned history
+    const historyExists = await fs.pathExists(historyPath);
+    if (historyExists) {
+      try {
+        await fs.move(historyPath, archivedHistoryPath);
+      } catch (historyError) {
+        // Rollback: move project back to original location
+        console.error('Failed to move history, rolling back project archive:', historyError);
+        try {
+          await fs.move(archivePath, projectPath);
+        } catch (rollbackError) {
+          // Critical: both history move and rollback failed
+          console.error('Critical: Rollback failed after history move failure:', rollbackError);
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'Critical archive failure',
+              message: `Project was moved to archive but history move failed and rollback also failed. Manual intervention required. Project archived at: ${archivedProjectName}`,
+            },
+            { status: 500 }
+          );
+        }
+        // Rollback succeeded, report the original history move error
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Failed to archive project history',
+            message: historyError instanceof Error ? historyError.message : 'Unknown error',
+          },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json({
