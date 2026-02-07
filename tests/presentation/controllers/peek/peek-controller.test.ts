@@ -179,6 +179,26 @@ describe("PeekController", () => {
     expect(body.preview).toBe("1|only line");
   });
 
+  it("should handle empty files correctly", async () => {
+    const { sut, readFileUseCaseStub } = makeSut();
+    vi.spyOn(readFileUseCaseStub, "readFilePreview").mockResolvedValueOnce({
+      content: "",
+      totalLines: 0,
+    });
+    const request = {
+      body: {
+        projectName: "any_project",
+        fileName: "any_file",
+      },
+    };
+    const response = await sut.handle(request);
+    expect(response.statusCode).toBe(200);
+    const body = response.body as PeekFileResponse;
+    expect(body.totalLines).toBe(0);
+    expect(body.previewLineCount).toBe(0);
+    expect(body.preview).toBe("");
+  });
+
   it("should correctly report total line count for large files", async () => {
     const { sut, readFileUseCaseStub } = makeSut();
     const content = makeMultiLineContent(1000);

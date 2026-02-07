@@ -47,8 +47,8 @@ export class PeekController implements Controller<PeekFileRequest, PeekFileRespo
       }
 
       const { content, totalLines } = result;
-      const previewLineCount = content.split("\n").length;
-      const numberedPreview = addLineNumbers(content, 1, totalLines);
+      const previewLineCount = Math.min(previewLines, totalLines);
+      const numberedPreview = totalLines > 0 ? addLineNumbers(content, 1, totalLines) : "";
 
       return ok({
         totalLines,
