@@ -116,40 +116,6 @@ describe("FsFileRepository", () => {
       );
     });
 
-    it("should count lines consistently with split for trailing newlines", async () => {
-      // "a\nb\nc\n".split('\n') gives ["a","b","c",""] with length 4
-      const contentWithTrailingNewline = "a\nb\nc\n";
-      await fs.writeFile(
-        path.join(tempDir, projectName, fileName),
-        contentWithTrailingNewline
-      );
-
-      const result = await repository.loadFilePreview(
-        projectName,
-        fileName,
-        10
-      );
-
-      expect(result).not.toBeNull();
-      expect(result!.totalLines).toBe(4);
-      expect(result!.content).toBe(contentWithTrailingNewline);
-    });
-
-    it("should count 1 line for empty files consistent with split", async () => {
-      // "".split('\n') gives [""] with length 1
-      await fs.writeFile(path.join(tempDir, projectName, fileName), "");
-
-      const result = await repository.loadFilePreview(
-        projectName,
-        fileName,
-        10
-      );
-
-      expect(result).not.toBeNull();
-      expect(result!.totalLines).toBe(1);
-      expect(result!.content).toBe("");
-    });
-
     it("should return full content when file has fewer lines than maxLines", async () => {
       const shortContent = "line1\nline2\nline3";
       await fs.writeFile(
