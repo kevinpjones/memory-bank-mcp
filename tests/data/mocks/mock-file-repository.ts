@@ -29,6 +29,28 @@ export class MockFileRepository implements FileRepository {
     return null;
   }
 
+  async loadFileLines(
+    projectName: string,
+    fileName: string
+  ): Promise<string[] | null> {
+    const fullContent = await this.loadFile(projectName, fileName);
+    if (fullContent === null) {
+      return null;
+    }
+    // Match readline semantics:
+    // - empty string → [] (not [""])
+    // - trailing newline is a terminator, not an extra line
+    //   e.g. "a\nb\n" → ["a", "b"] (not ["a", "b", ""])
+    if (!fullContent) {
+      return [];
+    }
+    const lines = fullContent.split("\n");
+    if (lines.length > 0 && lines[lines.length - 1] === "") {
+      return lines.slice(0, -1);
+    }
+    return lines;
+  }
+
   async writeFile(
     projectName: string,
     fileName: string,

@@ -180,6 +180,38 @@ describe("hasLineNumbers", () => {
   });
 });
 
+describe("addLineNumbers with startLineNumber offset", () => {
+  it("should start numbering from the specified startLineNumber", () => {
+    const content = "lineA\nlineB\nlineC";
+    const result = addLineNumbers(content, 50);
+    expect(result).toBe("50|lineA\n51|lineB\n52|lineC");
+  });
+
+  it("should use totalLinesInFile for padding when provided", () => {
+    const content = "lineA\nlineB\nlineC";
+    const result = addLineNumbers(content, 50, 200);
+    expect(result).toBe(" 50|lineA\n 51|lineB\n 52|lineC");
+  });
+
+  it("should default to startLineNumber=1 when not specified", () => {
+    const content = "first\nsecond";
+    const result = addLineNumbers(content);
+    expect(result).toBe("1|first\n2|second");
+  });
+
+  it("should calculate padding from lastLineNumber when totalLinesInFile not provided", () => {
+    const content = "lineA\nlineB";
+    // startLineNumber=99, so lastLineNumber=100, padding=3
+    const result = addLineNumbers(content, 99);
+    expect(result).toBe(" 99|lineA\n100|lineB");
+  });
+
+  it("should handle single-line content with offset", () => {
+    const result = addLineNumbers("single", 42, 100);
+    expect(result).toBe(" 42|single");
+  });
+});
+
 describe("roundtrip: addLineNumbers -> stripLineNumbers", () => {
   it("should preserve original content after roundtrip", () => {
     const original = "# Title\n\nSome content here\n- item 1\n- item 2\n\n```code```";

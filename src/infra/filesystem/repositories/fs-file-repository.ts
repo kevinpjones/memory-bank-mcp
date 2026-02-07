@@ -1,5 +1,7 @@
 import fs from "fs-extra";
 import path from "path";
+import { createReadStream } from "fs";
+import { createInterface } from "readline";
 import { FileRepository } from "../../../data/protocols/file-repository.js";
 import { File } from "../../../domain/entities/index.js";
 /**
@@ -48,6 +50,42 @@ export class FsFileRepository implements FileRepository {
 
     const content = await fs.readFile(filePath, "utf-8");
     return content;
+  }
+
+  /**
+   * Loads a file and returns its content split into lines using readline.
+   * Handles all line ending styles (LF, CRLF, CR) consistently via
+   * readline's crlfDelay: Infinity option.
+   */
+  async loadFileLines(
+    projectName: string,
+    fileName: string
+  ): Promise<string[] | null> {
+    const filePath = path.join(this.rootDir, projectName, fileName);
+
+    const fileExists = await fs.pathExists(filePath);
+    if (!fileExists) {
+      return null;
+    }
+
+    return new Promise((resolve, reject) => {
+      const lines: string[] = [];
+
+      const rl = createInterface({
+        input: createReadStream(filePath, { encoding: "utf-8" }),
+        crlfDelay: Infinity,
+      });
+
+      rl.on("line", (line) => {
+        lines.push(line);
+      });
+
+      rl.on("close", () => {
+        resolve(lines);
+      });
+
+      rl.on("error", reject);
+    });
   }
 
   /**
