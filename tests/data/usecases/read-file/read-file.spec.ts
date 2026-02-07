@@ -219,6 +219,21 @@ describe("ReadFile.readFilePartial", () => {
     ).rejects.toThrow(RangeError);
   });
 
+  test("should handle empty files gracefully", async () => {
+    vi.spyOn(fileRepositoryStub, "loadFileLines").mockResolvedValueOnce([]);
+
+    const result = await sut.readFilePartial({
+      projectName: "project-1",
+      fileName: "file1.md",
+      maxLines: 10,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.content).toBe("");
+    expect(result!.totalLines).toBe(0);
+    expect(result!.startLine).toBe(1);
+  });
+
   test("should clamp endLine to file bounds", async () => {
     vi.spyOn(fileRepositoryStub, "loadFileLines").mockResolvedValueOnce(
       ["line 1", "line 2", "line 3"]

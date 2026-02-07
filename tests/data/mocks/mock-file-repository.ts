@@ -37,6 +37,10 @@ export class MockFileRepository implements FileRepository {
     if (fullContent === null) {
       return null;
     }
+    // Match readline semantics: empty string → [], not [""]
+    if (!fullContent) {
+      return [];
+    }
     return fullContent.split("\n");
   }
 

@@ -54,6 +54,11 @@ export class ReadFile implements ReadFileUseCase {
 
     const totalLines = lines.length;
 
+    // Empty file: return empty content gracefully (consistent with readFilePreview)
+    if (totalLines === 0) {
+      return { content: "", totalLines: 0, startLine: 1 };
+    }
+
     // Resolve effective start and end (1-based, inclusive)
     let effectiveStart = params.startLine ?? 1;
     let effectiveEnd = params.endLine ?? totalLines;
