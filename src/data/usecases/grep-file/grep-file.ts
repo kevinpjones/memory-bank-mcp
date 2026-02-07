@@ -48,7 +48,6 @@ export class GrepFile implements GrepFileUseCase {
 
 /**
  * Searches through lines for a pattern and returns matches with context.
- * Merges overlapping context windows.
  */
 export function searchLines(
   lines: string[],
