@@ -1,4 +1,4 @@
-import { addLineNumbers, badRequest, notFound, ok, serverError } from "../../helpers/index.js";
+import { addLineNumbers, splitContentLines, badRequest, notFound, ok, serverError } from "../../helpers/index.js";
 import {
   Controller,
   InvalidParamError,
@@ -53,7 +53,9 @@ export class ReadController implements Controller<ReadRequest, ReadResponse> {
       let actualStartLine = 1;
 
       if (hasLineParams) {
-        const lines = content.split('\n');
+        // Use readline-consistent line splitting for consistent counting
+        // with peek_file (which uses readline internally)
+        const lines = splitContentLines(content);
         const totalLines = lines.length;
 
         // Resolve effective start and end (1-based, inclusive)

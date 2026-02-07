@@ -397,6 +397,28 @@ describe("ReadController", () => {
       expect(resultLines[2]).toBe("  3|line 3");
     });
 
+    it("should not count trailing newline as extra line (readline-consistent)", async () => {
+      const { sut, readFileUseCaseStub } = makeSut();
+      // Content with trailing newline: readline counts 3 lines, not 4
+      vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(
+        "line 1\nline 2\nline 3\n"
+      );
+      const request = {
+        body: {
+          projectName: "any_project",
+          fileName: "any_file",
+          startLine: 1,
+        },
+      };
+      const response = await sut.handle(request);
+      expect(response.statusCode).toBe(200);
+      const resultLines = (response.body as string).split("\n");
+      // Should be 3 lines, not 4 (trailing newline is a terminator, not extra line)
+      expect(resultLines.length).toBe(3);
+      expect(resultLines[0]).toBe("1|line 1");
+      expect(resultLines[2]).toBe("3|line 3");
+    });
+
     it("should clamp endLine to file bounds gracefully", async () => {
       const { sut, readFileUseCaseStub } = makeSut();
       const content = makeMultiLineContent(5);
