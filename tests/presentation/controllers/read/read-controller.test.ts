@@ -209,6 +209,21 @@ describe("ReadController", () => {
   // ============================================================
 
   describe("partial file reading", () => {
+    // Helper: mock readFilePartial with a multi-line file
+    const mockPartial = (stub: any, totalLines: number) => {
+      const allLines = Array.from({ length: totalLines }, (_, i) => `line ${i + 1}`);
+      vi.spyOn(stub, "readFilePartial").mockImplementation(async (params: any) => {
+        const effectiveStart = params.startLine ?? 1;
+        let effectiveEnd = params.endLine ?? totalLines;
+        if (params.maxLines !== undefined) {
+          effectiveEnd = Math.min(effectiveEnd, effectiveStart + params.maxLines - 1);
+        }
+        effectiveEnd = Math.min(effectiveEnd, totalLines);
+        const sliced = allLines.slice(effectiveStart - 1, effectiveEnd);
+        return { content: sliced.join("\n"), totalLines, startLine: effectiveStart };
+      });
+    };
+
     it("should return entire file when no line params are specified (backward compatible)", async () => {
       const { sut, readFileUseCaseStub } = makeSut();
       const content = makeMultiLineContent(5);
@@ -226,8 +241,7 @@ describe("ReadController", () => {
 
     it("should return lines 50-100 when startLine=50 and endLine=100", async () => {
       const { sut, readFileUseCaseStub } = makeSut();
-      const content = makeMultiLineContent(200);
-      vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(content);
+      mockPartial(readFileUseCaseStub, 200);
       const request = {
         body: {
           projectName: "any_project",
@@ -246,8 +260,7 @@ describe("ReadController", () => {
 
     it("should return from startLine to end of file when only startLine specified", async () => {
       const { sut, readFileUseCaseStub } = makeSut();
-      const content = makeMultiLineContent(10);
-      vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(content);
+      mockPartial(readFileUseCaseStub, 10);
       const request = {
         body: {
           projectName: "any_project",
@@ -265,8 +278,7 @@ describe("ReadController", () => {
 
     it("should return from beginning to endLine when only endLine specified", async () => {
       const { sut, readFileUseCaseStub } = makeSut();
-      const content = makeMultiLineContent(10);
-      vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(content);
+      mockPartial(readFileUseCaseStub, 10);
       const request = {
         body: {
           projectName: "any_project",
@@ -284,8 +296,7 @@ describe("ReadController", () => {
 
     it("should return exactly maxLines starting from startLine", async () => {
       const { sut, readFileUseCaseStub } = makeSut();
-      const content = makeMultiLineContent(100);
-      vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(content);
+      mockPartial(readFileUseCaseStub, 100);
       const request = {
         body: {
           projectName: "any_project",
@@ -304,8 +315,7 @@ describe("ReadController", () => {
 
     it("should return first maxLines when only maxLines specified", async () => {
       const { sut, readFileUseCaseStub } = makeSut();
-      const content = makeMultiLineContent(50);
-      vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(content);
+      mockPartial(readFileUseCaseStub, 50);
       const request = {
         body: {
           projectName: "any_project",
@@ -323,8 +333,7 @@ describe("ReadController", () => {
 
     it("should respect endLine when maxLines would extend beyond it", async () => {
       const { sut, readFileUseCaseStub } = makeSut();
-      const content = makeMultiLineContent(100);
-      vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(content);
+      mockPartial(readFileUseCaseStub, 100);
       const request = {
         body: {
           projectName: "any_project",
@@ -342,8 +351,7 @@ describe("ReadController", () => {
 
     it("should respect maxLines when endLine would extend beyond it", async () => {
       const { sut, readFileUseCaseStub } = makeSut();
-      const content = makeMultiLineContent(100);
-      vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(content);
+      mockPartial(readFileUseCaseStub, 100);
       const request = {
         body: {
           projectName: "any_project",
@@ -361,8 +369,7 @@ describe("ReadController", () => {
 
     it("should return partial content without line numbers when includeLineNumbers is false", async () => {
       const { sut, readFileUseCaseStub } = makeSut();
-      const content = makeMultiLineContent(10);
-      vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(content);
+      mockPartial(readFileUseCaseStub, 10);
       const request = {
         body: {
           projectName: "any_project",
@@ -379,8 +386,7 @@ describe("ReadController", () => {
 
     it("should use correct padding based on total file lines for partial reads", async () => {
       const { sut, readFileUseCaseStub } = makeSut();
-      const content = makeMultiLineContent(200);
-      vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(content);
+      mockPartial(readFileUseCaseStub, 200);
       const request = {
         body: {
           projectName: "any_project",
@@ -397,32 +403,9 @@ describe("ReadController", () => {
       expect(resultLines[2]).toBe("  3|line 3");
     });
 
-    it("should not count trailing newline as extra line (readline-consistent)", async () => {
-      const { sut, readFileUseCaseStub } = makeSut();
-      // Content with trailing newline: readline counts 3 lines, not 4
-      vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(
-        "line 1\nline 2\nline 3\n"
-      );
-      const request = {
-        body: {
-          projectName: "any_project",
-          fileName: "any_file",
-          startLine: 1,
-        },
-      };
-      const response = await sut.handle(request);
-      expect(response.statusCode).toBe(200);
-      const resultLines = (response.body as string).split("\n");
-      // Should be 3 lines, not 4 (trailing newline is a terminator, not extra line)
-      expect(resultLines.length).toBe(3);
-      expect(resultLines[0]).toBe("1|line 1");
-      expect(resultLines[2]).toBe("3|line 3");
-    });
-
     it("should clamp endLine to file bounds gracefully", async () => {
       const { sut, readFileUseCaseStub } = makeSut();
-      const content = makeMultiLineContent(5);
-      vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(content);
+      mockPartial(readFileUseCaseStub, 5);
       const request = {
         body: {
           projectName: "any_project",
@@ -558,8 +541,9 @@ describe("ReadController", () => {
 
     it("should return 400 when startLine exceeds total file lines", async () => {
       const { sut, readFileUseCaseStub } = makeSut();
-      const content = makeMultiLineContent(5);
-      vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(content);
+      vi.spyOn(readFileUseCaseStub, "readFilePartial").mockRejectedValueOnce(
+        new RangeError("startLine (100) exceeds total lines in file (5)")
+      );
       const request = {
         body: {
           projectName: "any_project",

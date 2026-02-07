@@ -1,4 +1,4 @@
-import { addLineNumbers, splitContentLines, badRequest, notFound, ok, serverError } from "../../helpers/index.js";
+import { addLineNumbers, badRequest, notFound, ok, serverError } from "../../helpers/index.js";
 import {
   Controller,
   InvalidParamError,
@@ -38,66 +38,67 @@ export class ReadController implements Controller<ReadRequest, ReadResponse> {
         return badRequest(paramError);
       }
 
-      const content = await this.readFileUseCase.readFile({
-        projectName,
-        fileName,
-      });
-
-      if (content === null) {
-        return notFound(fileName);
-      }
-
-      // Apply partial read if any line parameters are specified
       const hasLineParams = startLine !== undefined || endLine !== undefined || maxLines !== undefined;
-      let resultContent: string;
-      let actualStartLine = 1;
 
       if (hasLineParams) {
-        // Use readline-consistent line splitting for consistent counting
-        // with peek_file (which uses readline internally)
-        const lines = splitContentLines(content);
-        const totalLines = lines.length;
-
-        // Resolve effective start and end (1-based, inclusive)
-        let effectiveStart = startLine ?? 1;
-        let effectiveEnd = endLine ?? totalLines;
-
-        // Apply maxLines constraint
-        if (maxLines !== undefined) {
-          const maxEnd = effectiveStart + maxLines - 1;
-          effectiveEnd = Math.min(effectiveEnd, maxEnd);
-        }
-
-        // Validate resolved range against file bounds
-        if (effectiveStart > totalLines) {
-          return badRequest(
-            new InvalidParamError(
-              `startLine (${effectiveStart}) exceeds total lines in file (${totalLines})`
-            )
-          );
-        }
-
-        // Clamp effectiveEnd to file bounds (graceful handling)
-        effectiveEnd = Math.min(effectiveEnd, totalLines);
-
-        // Slice lines (convert 1-based to 0-based)
-        const slicedLines = lines.slice(effectiveStart - 1, effectiveEnd);
-        resultContent = slicedLines.join('\n');
-        actualStartLine = effectiveStart;
-
-        // Add line numbers if requested, with correct offset
-        if (includeLineNumbers) {
-          resultContent = addLineNumbers(resultContent, actualStartLine, totalLines);
-        }
-      } else {
-        // No line params — return full content
-        resultContent = includeLineNumbers ? addLineNumbers(content) : content;
+        return await this.handlePartialRead(
+          projectName, fileName, includeLineNumbers, startLine, endLine, maxLines
+        );
       }
 
-      return ok(resultContent);
+      return await this.handleFullRead(projectName, fileName, includeLineNumbers);
     } catch (error) {
+      if (error instanceof RangeError) {
+        return badRequest(new InvalidParamError(error.message));
+      }
       return serverError(error as Error);
     }
+  }
+
+  private async handleFullRead(
+    projectName: string,
+    fileName: string,
+    includeLineNumbers: boolean
+  ): Promise<Response<ReadResponse>> {
+    const content = await this.readFileUseCase.readFile({
+      projectName,
+      fileName,
+    });
+
+    if (content === null) {
+      return notFound(fileName);
+    }
+
+    const resultContent = includeLineNumbers ? addLineNumbers(content) : content;
+    return ok(resultContent);
+  }
+
+  private async handlePartialRead(
+    projectName: string,
+    fileName: string,
+    includeLineNumbers: boolean,
+    startLine?: number,
+    endLine?: number,
+    maxLines?: number,
+  ): Promise<Response<ReadResponse>> {
+    const result = await this.readFileUseCase.readFilePartial({
+      projectName,
+      fileName,
+      startLine,
+      endLine,
+      maxLines,
+    });
+
+    if (result === null) {
+      return notFound(fileName);
+    }
+
+    let resultContent = result.content;
+    if (includeLineNumbers) {
+      resultContent = addLineNumbers(resultContent, result.startLine, result.totalLines);
+    }
+
+    return ok(resultContent);
   }
 
   private validateLineParams(

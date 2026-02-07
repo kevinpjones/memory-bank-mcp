@@ -77,61 +77,81 @@ describe("FsFileRepository", () => {
     });
   });
 
-  describe("loadFilePreview", () => {
+  describe("loadFileLines", () => {
     it("should return null when the file doesn't exist", async () => {
-      const result = await repository.loadFilePreview(
+      const result = await repository.loadFileLines(
         projectName,
-        "non-existent.md",
-        10
+        "non-existent.md"
       );
       expect(result).toBeNull();
     });
 
     it("should return null when the project doesn't exist", async () => {
-      const result = await repository.loadFilePreview(
+      const result = await repository.loadFileLines(
         "non-existent-project",
-        fileName,
-        10
+        fileName
       );
       expect(result).toBeNull();
     });
 
-    it("should return first N lines and total line count", async () => {
-      const lines = Array.from({ length: 50 }, (_, i) => `line ${i + 1}`).join(
+    it("should return all lines as an array", async () => {
+      const content = Array.from({ length: 50 }, (_, i) => `line ${i + 1}`).join(
         "\n"
       );
-      await fs.writeFile(path.join(tempDir, projectName, fileName), lines);
+      await fs.writeFile(path.join(tempDir, projectName, fileName), content);
 
-      const result = await repository.loadFilePreview(
-        projectName,
-        fileName,
-        10
-      );
+      const result = await repository.loadFileLines(projectName, fileName);
 
       expect(result).not.toBeNull();
-      expect(result!.totalLines).toBe(50);
-      expect(result!.content.split("\n")).toHaveLength(10);
-      expect(result!.content).toBe(
-        lines.split("\n").slice(0, 10).join("\n")
-      );
+      expect(result!).toHaveLength(50);
+      expect(result![0]).toBe("line 1");
+      expect(result![49]).toBe("line 50");
     });
 
-    it("should return full content when file has fewer lines than maxLines", async () => {
-      const shortContent = "line1\nline2\nline3";
+    it("should handle trailing newline without extra empty element", async () => {
       await fs.writeFile(
         path.join(tempDir, projectName, fileName),
-        shortContent
+        "a\nb\nc\n"
       );
 
-      const result = await repository.loadFilePreview(
-        projectName,
-        fileName,
-        10
-      );
+      const result = await repository.loadFileLines(projectName, fileName);
 
       expect(result).not.toBeNull();
-      expect(result!.totalLines).toBe(3);
-      expect(result!.content).toBe(shortContent);
+      // readline treats trailing newline as terminator, not extra line
+      expect(result!).toEqual(["a", "b", "c"]);
+    });
+
+    it("should handle CRLF line endings", async () => {
+      await fs.writeFile(
+        path.join(tempDir, projectName, fileName),
+        "a\r\nb\r\nc"
+      );
+
+      const result = await repository.loadFileLines(projectName, fileName);
+
+      expect(result).not.toBeNull();
+      expect(result!).toEqual(["a", "b", "c"]);
+    });
+
+    it("should return single-element array for single-line files", async () => {
+      await fs.writeFile(
+        path.join(tempDir, projectName, fileName),
+        "only line"
+      );
+
+      const result = await repository.loadFileLines(projectName, fileName);
+
+      expect(result).not.toBeNull();
+      expect(result!).toEqual(["only line"]);
+    });
+
+    it("should return empty array for empty files", async () => {
+      await fs.writeFile(path.join(tempDir, projectName, fileName), "");
+
+      const result = await repository.loadFileLines(projectName, fileName);
+
+      expect(result).not.toBeNull();
+      expect(result!).toEqual([]);
     });
   });
 

@@ -53,14 +53,14 @@ export class FsFileRepository implements FileRepository {
   }
 
   /**
-   * Loads only the first maxLines from a file using streaming.
-   * Efficient for large files - does not load entire file into memory.
+   * Loads a file and returns its content split into lines using readline.
+   * Handles all line ending styles (LF, CRLF, CR) consistently via
+   * readline's crlfDelay: Infinity option.
    */
-  async loadFilePreview(
+  async loadFileLines(
     projectName: string,
-    fileName: string,
-    maxLines: number
-  ): Promise<{ content: string; totalLines: number } | null> {
+    fileName: string
+  ): Promise<string[] | null> {
     const filePath = path.join(this.rootDir, projectName, fileName);
 
     const fileExists = await fs.pathExists(filePath);
@@ -70,7 +70,6 @@ export class FsFileRepository implements FileRepository {
 
     return new Promise((resolve, reject) => {
       const lines: string[] = [];
-      let totalLines = 0;
 
       const rl = createInterface({
         input: createReadStream(filePath, { encoding: "utf-8" }),
@@ -78,17 +77,11 @@ export class FsFileRepository implements FileRepository {
       });
 
       rl.on("line", (line) => {
-        totalLines++;
-        if (lines.length < maxLines) {
-          lines.push(line);
-        }
+        lines.push(line);
       });
 
       rl.on("close", () => {
-        resolve({
-          content: lines.join("\n"),
-          totalLines,
-        });
+        resolve(lines);
       });
 
       rl.on("error", reject);

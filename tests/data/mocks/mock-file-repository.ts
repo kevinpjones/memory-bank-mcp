@@ -29,19 +29,15 @@ export class MockFileRepository implements FileRepository {
     return null;
   }
 
-  async loadFilePreview(
+  async loadFileLines(
     projectName: string,
-    fileName: string,
-    maxLines: number
-  ): Promise<{ content: string; totalLines: number } | null> {
+    fileName: string
+  ): Promise<string[] | null> {
     const fullContent = await this.loadFile(projectName, fileName);
     if (fullContent === null) {
       return null;
     }
-    const lines = fullContent.split("\n");
-    const totalLines = lines.length;
-    const content = lines.slice(0, maxLines).join("\n");
-    return { content, totalLines };
+    return fullContent.split("\n");
   }
 
   async writeFile(

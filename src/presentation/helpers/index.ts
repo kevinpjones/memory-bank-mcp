@@ -21,4 +21,4 @@ export const ok = (data: any): Response => ({
   body: data,
 });
 
-export { addLineNumbers, splitContentLines, stripLineNumbers, hasLineNumbers } from "./line-numbers.js";
+export { addLineNumbers, stripLineNumbers, hasLineNumbers } from "./line-numbers.js";

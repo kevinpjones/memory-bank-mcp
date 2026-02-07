@@ -35,18 +35,13 @@ export class HistoryTrackingFileRepository implements FileRepository {
   }
 
   /**
-   * Loads the first N lines of a file (proxied to wrapped repository)
+   * Loads file lines (proxied to wrapped repository)
    */
-  async loadFilePreview(
+  async loadFileLines(
     projectName: string,
-    fileName: string,
-    maxLines: number
-  ): Promise<{ content: string; totalLines: number } | null> {
-    return this.wrappedRepository.loadFilePreview(
-      projectName,
-      fileName,
-      maxLines
-    );
+    fileName: string
+  ): Promise<string[] | null> {
+    return this.wrappedRepository.loadFileLines(projectName, fileName);
   }
 
   /**

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   addLineNumbers,
-  splitContentLines,
   stripLineNumbers,
   hasLineNumbers,
 } from "../../../src/presentation/helpers/line-numbers.js";
@@ -59,53 +58,6 @@ describe("addLineNumbers", () => {
     const content = "# Heading\n- item\n```code```";
     const result = addLineNumbers(content);
     expect(result).toBe("1|# Heading\n2|- item\n3|```code```");
-  });
-});
-
-describe("splitContentLines", () => {
-  it("should split content into lines", () => {
-    expect(splitContentLines("a\nb\nc")).toEqual(["a", "b", "c"]);
-  });
-
-  it("should strip trailing empty element from trailing newline", () => {
-    // "a\nb\nc\n".split('\n') gives ["a", "b", "c", ""] but readline gives 3 lines
-    expect(splitContentLines("a\nb\nc\n")).toEqual(["a", "b", "c"]);
-  });
-
-  it("should return empty array for empty string", () => {
-    expect(splitContentLines("")).toEqual([]);
-  });
-
-  it("should handle single line without trailing newline", () => {
-    expect(splitContentLines("hello")).toEqual(["hello"]);
-  });
-
-  it("should handle single line with trailing newline", () => {
-    expect(splitContentLines("hello\n")).toEqual(["hello"]);
-  });
-
-  it("should preserve internal empty lines", () => {
-    expect(splitContentLines("a\n\nc")).toEqual(["a", "", "c"]);
-  });
-
-  it("should handle content that is just a newline", () => {
-    expect(splitContentLines("\n")).toEqual([""]);
-  });
-
-  it("should normalize CRLF line endings like readline", () => {
-    expect(splitContentLines("a\r\nb\r\nc")).toEqual(["a", "b", "c"]);
-  });
-
-  it("should normalize CRLF with trailing newline", () => {
-    expect(splitContentLines("a\r\nb\r\nc\r\n")).toEqual(["a", "b", "c"]);
-  });
-
-  it("should normalize standalone CR line endings", () => {
-    expect(splitContentLines("a\rb\rc")).toEqual(["a", "b", "c"]);
-  });
-
-  it("should handle mixed line endings", () => {
-    expect(splitContentLines("a\r\nb\nc\rd")).toEqual(["a", "b", "c", "d"]);
   });
 });
 

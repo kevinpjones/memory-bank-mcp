@@ -53,37 +53,6 @@ export function addLineNumbers(content: string, startLineNumber: number = 1, tot
 }
 
 /**
- * Splits content into lines using readline-consistent semantics.
- *
- * Unlike `content.split('\n')`, this function:
- * - Normalizes all line endings (CRLF `\r\n`, CR `\r`, LF `\n`) before splitting,
- *   matching readline's `crlfDelay: Infinity` behavior
- * - Returns an empty array for empty content (not `[""]`)
- * - Does not count a trailing newline as creating an extra empty line
- *   (e.g., `"a\nb\nc\n"` → `["a", "b", "c"]`, not `["a", "b", "c", ""]`)
- *
- * This matches Node.js readline behavior and ensures consistent line
- * counting between `peek_file` (which uses readline) and `read_file`.
- */
-export function splitContentLines(content: string): string[] {
-  if (!content) {
-    return [];
-  }
-
-  // Normalize line endings to LF, matching readline's crlfDelay behavior:
-  // CRLF (\r\n) -> LF first, then standalone CR (\r) -> LF
-  const normalized = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-  const lines = normalized.split('\n');
-
-  // Strip trailing empty element caused by trailing newline
-  if (lines.length > 0 && lines[lines.length - 1] === '') {
-    return lines.slice(0, -1);
-  }
-
-  return lines;
-}
-
-/**
  * Strips line number prefixes from content.
  * This is useful for ensuring content written to disk doesn't contain
  * line number metadata that may have been accidentally included.
