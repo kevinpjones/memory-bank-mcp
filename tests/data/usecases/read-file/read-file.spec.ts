@@ -93,3 +93,61 @@ describe("ReadFile UseCase", () => {
     await expect(sut.readFile(params)).rejects.toThrow(error);
   });
 });
+
+describe("ReadFile.readFilePreview", () => {
+  let sut: ReadFile;
+  let fileRepositoryStub: FileRepository;
+  let projectRepositoryStub: ProjectRepository;
+
+  beforeEach(() => {
+    fileRepositoryStub = new MockFileRepository();
+    projectRepositoryStub = new MockProjectRepository();
+    sut = new ReadFile(fileRepositoryStub, projectRepositoryStub);
+  });
+
+  test("should call FileRepository.loadFilePreview with correct params", async () => {
+    const loadFilePreviewSpy = vi.spyOn(
+      fileRepositoryStub,
+      "loadFilePreview"
+    );
+
+    await sut.readFilePreview({
+      projectName: "project-1",
+      fileName: "file1.md",
+      maxLines: 10,
+    });
+
+    expect(loadFilePreviewSpy).toHaveBeenCalledWith(
+      "project-1",
+      "file1.md",
+      10
+    );
+  });
+
+  test("should return null if project does not exist", async () => {
+    vi.spyOn(projectRepositoryStub, "projectExists").mockResolvedValueOnce(
+      false
+    );
+
+    const result = await sut.readFilePreview({
+      projectName: "non-existent-project",
+      fileName: "file1.md",
+      maxLines: 10,
+    });
+
+    expect(result).toBeNull();
+  });
+
+  test("should return preview result on success", async () => {
+    const fullContent = "Content of file1.md";
+    const result = await sut.readFilePreview({
+      projectName: "project-1",
+      fileName: "file1.md",
+      maxLines: 10,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.content).toBe(fullContent);
+    expect(result!.totalLines).toBe(1);
+  });
+});

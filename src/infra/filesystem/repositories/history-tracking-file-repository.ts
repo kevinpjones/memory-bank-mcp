@@ -35,6 +35,21 @@ export class HistoryTrackingFileRepository implements FileRepository {
   }
 
   /**
+   * Loads the first N lines of a file (proxied to wrapped repository)
+   */
+  async loadFilePreview(
+    projectName: string,
+    fileName: string,
+    maxLines: number
+  ): Promise<{ content: string; totalLines: number } | null> {
+    return this.wrappedRepository.loadFilePreview(
+      projectName,
+      fileName,
+      maxLines
+    );
+  }
+
+  /**
    * Writes a new file and records the creation in history
    */
   async writeFile(

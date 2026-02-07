@@ -2,6 +2,7 @@ import {
   FileRepository,
   ProjectRepository,
   ReadFileParams,
+  ReadFilePreviewParams,
   ReadFileUseCase,
 } from "./read-file-protocols.js";
 
@@ -22,5 +23,24 @@ export class ReadFile implements ReadFileUseCase {
     }
 
     return this.fileRepository.loadFile(projectName, fileName);
+  }
+
+  async readFilePreview(
+    params: ReadFilePreviewParams
+  ): Promise<{ content: string; totalLines: number } | null> {
+    const { projectName, fileName, maxLines } = params;
+
+    const projectExists = await this.projectRepository.projectExists(
+      projectName
+    );
+    if (!projectExists) {
+      return null;
+    }
+
+    return this.fileRepository.loadFilePreview(
+      projectName,
+      fileName,
+      maxLines
+    );
   }
 }

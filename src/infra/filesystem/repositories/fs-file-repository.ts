@@ -1,5 +1,7 @@
 import fs from "fs-extra";
 import path from "path";
+import { createReadStream } from "fs";
+import { createInterface } from "readline";
 import { FileRepository } from "../../../data/protocols/file-repository.js";
 import { File } from "../../../domain/entities/index.js";
 /**
@@ -48,6 +50,49 @@ export class FsFileRepository implements FileRepository {
 
     const content = await fs.readFile(filePath, "utf-8");
     return content;
+  }
+
+  /**
+   * Loads only the first maxLines from a file using streaming.
+   * Efficient for large files - does not load entire file into memory.
+   */
+  async loadFilePreview(
+    projectName: string,
+    fileName: string,
+    maxLines: number
+  ): Promise<{ content: string; totalLines: number } | null> {
+    const filePath = path.join(this.rootDir, projectName, fileName);
+
+    const fileExists = await fs.pathExists(filePath);
+    if (!fileExists) {
+      return null;
+    }
+
+    return new Promise((resolve, reject) => {
+      const lines: string[] = [];
+      let totalLines = 0;
+
+      const rl = createInterface({
+        input: createReadStream(filePath, { encoding: "utf-8" }),
+        crlfDelay: Infinity,
+      });
+
+      rl.on("line", (line) => {
+        totalLines++;
+        if (lines.length < maxLines) {
+          lines.push(line);
+        }
+      });
+
+      rl.on("close", () => {
+        resolve({
+          content: lines.join("\n"),
+          totalLines,
+        });
+      });
+
+      rl.on("error", reject);
+    });
   }
 
   /**

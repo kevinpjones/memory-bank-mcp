@@ -56,7 +56,7 @@ describe("PeekController", () => {
 
   it("should return 404 if ReadFileUseCase returns null", async () => {
     const { sut, readFileUseCaseStub } = makeSut();
-    vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(null);
+    vi.spyOn(readFileUseCaseStub, "readFilePreview").mockResolvedValueOnce(null);
     const request = {
       body: {
         projectName: "any_project",
@@ -72,7 +72,7 @@ describe("PeekController", () => {
 
   it("should return 500 if ReadFileUseCase throws", async () => {
     const { sut, readFileUseCaseStub } = makeSut();
-    vi.spyOn(readFileUseCaseStub, "readFile").mockRejectedValueOnce(
+    vi.spyOn(readFileUseCaseStub, "readFilePreview").mockRejectedValueOnce(
       new Error("any_error")
     );
     const request = {
@@ -91,7 +91,10 @@ describe("PeekController", () => {
   it("should return first 10 lines by default", async () => {
     const { sut, readFileUseCaseStub } = makeSut();
     const content = makeMultiLineContent(50);
-    vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(content);
+    vi.spyOn(readFileUseCaseStub, "readFilePreview").mockResolvedValueOnce({
+      content: content.split("\n").slice(0, 10).join("\n"),
+      totalLines: 50,
+    });
     const request = {
       body: {
         projectName: "any_project",
@@ -113,7 +116,10 @@ describe("PeekController", () => {
   it("should respect custom previewLines parameter", async () => {
     const { sut, readFileUseCaseStub } = makeSut();
     const content = makeMultiLineContent(100);
-    vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(content);
+    vi.spyOn(readFileUseCaseStub, "readFilePreview").mockResolvedValueOnce({
+      content: content.split("\n").slice(0, 25).join("\n"),
+      totalLines: 100,
+    });
     const request = {
       body: {
         projectName: "any_project",
@@ -133,7 +139,10 @@ describe("PeekController", () => {
   it("should handle files shorter than preview length gracefully", async () => {
     const { sut, readFileUseCaseStub } = makeSut();
     const content = makeMultiLineContent(3);
-    vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(content);
+    vi.spyOn(readFileUseCaseStub, "readFilePreview").mockResolvedValueOnce({
+      content,
+      totalLines: 3,
+    });
     const request = {
       body: {
         projectName: "any_project",
@@ -152,7 +161,10 @@ describe("PeekController", () => {
 
   it("should handle single-line files", async () => {
     const { sut, readFileUseCaseStub } = makeSut();
-    vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce("only line");
+    vi.spyOn(readFileUseCaseStub, "readFilePreview").mockResolvedValueOnce({
+      content: "only line",
+      totalLines: 1,
+    });
     const request = {
       body: {
         projectName: "any_project",
@@ -170,7 +182,10 @@ describe("PeekController", () => {
   it("should correctly report total line count for large files", async () => {
     const { sut, readFileUseCaseStub } = makeSut();
     const content = makeMultiLineContent(1000);
-    vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(content);
+    vi.spyOn(readFileUseCaseStub, "readFilePreview").mockResolvedValueOnce({
+      content: content.split("\n").slice(0, 10).join("\n"),
+      totalLines: 1000,
+    });
     const request = {
       body: {
         projectName: "any_project",
@@ -233,7 +248,10 @@ describe("PeekController", () => {
   it("should use correct line number padding based on total file lines", async () => {
     const { sut, readFileUseCaseStub } = makeSut();
     const content = makeMultiLineContent(200);
-    vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(content);
+    vi.spyOn(readFileUseCaseStub, "readFilePreview").mockResolvedValueOnce({
+      content: content.split("\n").slice(0, 3).join("\n"),
+      totalLines: 200,
+    });
     const request = {
       body: {
         projectName: "any_project",

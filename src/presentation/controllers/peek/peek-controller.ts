@@ -31,37 +31,40 @@ export class PeekController implements Controller<PeekFileRequest, PeekFileRespo
         previewLines = DEFAULT_PREVIEW_LINES,
       } = request.body!;
 
-      // Validate previewLines
-      if (!Number.isInteger(previewLines) || previewLines < 1) {
-        return badRequest(
-          new InvalidParamError('previewLines must be a positive integer')
-        );
+      const paramError = this.validatePeekParams(previewLines);
+      if (paramError) {
+        return badRequest(paramError);
       }
 
-      const content = await this.readFileUseCase.readFile({
+      const result = await this.readFileUseCase.readFilePreview({
         projectName,
         fileName,
+        maxLines: previewLines,
       });
 
-      if (content === null) {
+      if (result === null) {
         return notFound(fileName);
       }
 
-      const lines = content.split('\n');
-      const totalLines = lines.length;
-      const effectivePreviewCount = Math.min(previewLines, totalLines);
-
-      const previewContent = lines.slice(0, effectivePreviewCount).join('\n');
-      const numberedPreview = addLineNumbers(previewContent, 1, totalLines);
+      const { content, totalLines } = result;
+      const previewLineCount = content.split("\n").length;
+      const numberedPreview = addLineNumbers(content, 1, totalLines);
 
       return ok({
         totalLines,
         fileName,
-        previewLineCount: effectivePreviewCount,
+        previewLineCount,
         preview: numberedPreview,
       });
     } catch (error) {
       return serverError(error as Error);
     }
+  }
+
+  private validatePeekParams(previewLines: number): Error | null {
+    if (!Number.isInteger(previewLines) || previewLines < 1) {
+      return new InvalidParamError('previewLines must be a positive integer');
+    }
+    return null;
   }
 }

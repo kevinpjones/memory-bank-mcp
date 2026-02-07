@@ -77,6 +77,64 @@ describe("FsFileRepository", () => {
     });
   });
 
+  describe("loadFilePreview", () => {
+    it("should return null when the file doesn't exist", async () => {
+      const result = await repository.loadFilePreview(
+        projectName,
+        "non-existent.md",
+        10
+      );
+      expect(result).toBeNull();
+    });
+
+    it("should return null when the project doesn't exist", async () => {
+      const result = await repository.loadFilePreview(
+        "non-existent-project",
+        fileName,
+        10
+      );
+      expect(result).toBeNull();
+    });
+
+    it("should return first N lines and total line count", async () => {
+      const lines = Array.from({ length: 50 }, (_, i) => `line ${i + 1}`).join(
+        "\n"
+      );
+      await fs.writeFile(path.join(tempDir, projectName, fileName), lines);
+
+      const result = await repository.loadFilePreview(
+        projectName,
+        fileName,
+        10
+      );
+
+      expect(result).not.toBeNull();
+      expect(result!.totalLines).toBe(50);
+      expect(result!.content.split("\n")).toHaveLength(10);
+      expect(result!.content).toBe(
+        lines.split("\n").slice(0, 10).join("\n")
+      );
+    });
+
+    it("should return full content when file has fewer lines than maxLines", async () => {
+      const shortContent = "line1\nline2\nline3";
+      await fs.writeFile(
+        path.join(tempDir, projectName, fileName),
+        shortContent
+      );
+
+      const result = await repository.loadFilePreview(
+        projectName,
+        fileName,
+        10
+      );
+
+      expect(result).not.toBeNull();
+      expect(result!.totalLines).toBe(3);
+      expect(result!.content).toBe(shortContent);
+    });
+  });
+
   describe("writeFile", () => {
     it("should create the project directory if it doesn't exist", async () => {
       const newProjectName = "new-project";
