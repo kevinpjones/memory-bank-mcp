@@ -38,67 +38,32 @@ export class ReadController implements Controller<ReadRequest, ReadResponse> {
         return badRequest(paramError);
       }
 
-      const hasLineParams = startLine !== undefined || endLine !== undefined || maxLines !== undefined;
+      // All reads go through readFilePartial for consistent readline-based
+      // line counting. When no line params are specified, it returns the full file.
+      const result = await this.readFileUseCase.readFilePartial({
+        projectName,
+        fileName,
+        startLine,
+        endLine,
+        maxLines,
+      });
 
-      if (hasLineParams) {
-        return await this.handlePartialRead(
-          projectName, fileName, includeLineNumbers, startLine, endLine, maxLines
-        );
+      if (result === null) {
+        return notFound(fileName);
       }
 
-      return await this.handleFullRead(projectName, fileName, includeLineNumbers);
+      let resultContent = result.content;
+      if (includeLineNumbers) {
+        resultContent = addLineNumbers(resultContent, result.startLine, result.totalLines);
+      }
+
+      return ok(resultContent);
     } catch (error) {
       if (error instanceof RangeError) {
         return badRequest(new InvalidParamError(error.message));
       }
       return serverError(error as Error);
     }
-  }
-
-  private async handleFullRead(
-    projectName: string,
-    fileName: string,
-    includeLineNumbers: boolean
-  ): Promise<Response<ReadResponse>> {
-    const content = await this.readFileUseCase.readFile({
-      projectName,
-      fileName,
-    });
-
-    if (content === null) {
-      return notFound(fileName);
-    }
-
-    const resultContent = includeLineNumbers ? addLineNumbers(content) : content;
-    return ok(resultContent);
-  }
-
-  private async handlePartialRead(
-    projectName: string,
-    fileName: string,
-    includeLineNumbers: boolean,
-    startLine?: number,
-    endLine?: number,
-    maxLines?: number,
-  ): Promise<Response<ReadResponse>> {
-    const result = await this.readFileUseCase.readFilePartial({
-      projectName,
-      fileName,
-      startLine,
-      endLine,
-      maxLines,
-    });
-
-    if (result === null) {
-      return notFound(fileName);
-    }
-
-    let resultContent = result.content;
-    if (includeLineNumbers) {
-      resultContent = addLineNumbers(resultContent, result.startLine, result.totalLines);
-    }
-
-    return ok(resultContent);
   }
 
   private validateLineParams(

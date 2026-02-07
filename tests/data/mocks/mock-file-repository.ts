@@ -37,11 +37,18 @@ export class MockFileRepository implements FileRepository {
     if (fullContent === null) {
       return null;
     }
-    // Match readline semantics: empty string → [], not [""]
+    // Match readline semantics:
+    // - empty string → [] (not [""])
+    // - trailing newline is a terminator, not an extra line
+    //   e.g. "a\nb\n" → ["a", "b"] (not ["a", "b", ""])
     if (!fullContent) {
       return [];
     }
-    return fullContent.split("\n");
+    const lines = fullContent.split("\n");
+    if (lines.length > 0 && lines[lines.length - 1] === "") {
+      return lines.slice(0, -1);
+    }
+    return lines;
   }
 
   async writeFile(

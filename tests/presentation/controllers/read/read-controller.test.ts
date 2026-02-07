@@ -55,9 +55,9 @@ describe("ReadController", () => {
     });
   });
 
-  it("should call ReadFileUseCase with correct values", async () => {
+  it("should call ReadFileUseCase.readFilePartial with correct values", async () => {
     const { sut, readFileUseCaseStub } = makeSut();
-    const readFileSpy = vi.spyOn(readFileUseCaseStub, "readFile");
+    const readFilePartialSpy = vi.spyOn(readFileUseCaseStub, "readFilePartial");
     const request = {
       body: {
         projectName: "any_project",
@@ -65,15 +65,18 @@ describe("ReadController", () => {
       },
     };
     await sut.handle(request);
-    expect(readFileSpy).toHaveBeenCalledWith({
+    expect(readFilePartialSpy).toHaveBeenCalledWith({
       projectName: "any_project",
       fileName: "any_file",
+      startLine: undefined,
+      endLine: undefined,
+      maxLines: undefined,
     });
   });
 
   it("should return 404 if ReadFileUseCase returns null", async () => {
     const { sut, readFileUseCaseStub } = makeSut();
-    vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(null);
+    vi.spyOn(readFileUseCaseStub, "readFilePartial").mockResolvedValueOnce(null);
     const request = {
       body: {
         projectName: "any_project",
@@ -89,7 +92,7 @@ describe("ReadController", () => {
 
   it("should return 500 if ReadFileUseCase throws", async () => {
     const { sut, readFileUseCaseStub } = makeSut();
-    vi.spyOn(readFileUseCaseStub, "readFile").mockRejectedValueOnce(
+    vi.spyOn(readFileUseCaseStub, "readFilePartial").mockRejectedValueOnce(
       new Error("any_error")
     );
     const request = {
@@ -150,9 +153,11 @@ describe("ReadController", () => {
 
   it("should add sequential 1-indexed line numbers to multi-line content", async () => {
     const { sut, readFileUseCaseStub } = makeSut();
-    vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(
-      "first line\nsecond line\nthird line"
-    );
+    vi.spyOn(readFileUseCaseStub, "readFilePartial").mockResolvedValueOnce({
+      content: "first line\nsecond line\nthird line",
+      totalLines: 3,
+      startLine: 1,
+    });
     const request = {
       body: {
         projectName: "any_project",
@@ -167,9 +172,11 @@ describe("ReadController", () => {
 
   it("should preserve empty lines when adding line numbers", async () => {
     const { sut, readFileUseCaseStub } = makeSut();
-    vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(
-      "first\n\nthird"
-    );
+    vi.spyOn(readFileUseCaseStub, "readFilePartial").mockResolvedValueOnce({
+      content: "first\n\nthird",
+      totalLines: 3,
+      startLine: 1,
+    });
     const request = {
       body: {
         projectName: "any_project",
@@ -185,9 +192,11 @@ describe("ReadController", () => {
   it("should handle large files with proper line number padding", async () => {
     const { sut, readFileUseCaseStub } = makeSut();
     const lines = Array.from({ length: 100 }, (_, i) => `line ${i + 1}`);
-    vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(
-      lines.join("\n")
-    );
+    vi.spyOn(readFileUseCaseStub, "readFilePartial").mockResolvedValueOnce({
+      content: lines.join("\n"),
+      totalLines: 100,
+      startLine: 1,
+    });
     const request = {
       body: {
         projectName: "any_project",
@@ -226,8 +235,7 @@ describe("ReadController", () => {
 
     it("should return entire file when no line params are specified (backward compatible)", async () => {
       const { sut, readFileUseCaseStub } = makeSut();
-      const content = makeMultiLineContent(5);
-      vi.spyOn(readFileUseCaseStub, "readFile").mockResolvedValueOnce(content);
+      mockPartial(readFileUseCaseStub, 5);
       const request = {
         body: {
           projectName: "any_project",
