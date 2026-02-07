@@ -21,24 +21,32 @@
  * Adds line numbers as metadata prefix to each line of content.
  * 
  * @param content - The raw content string to add line numbers to
+ * @param startLineNumber - The 1-based line number to start numbering from (default: 1).
+ *   Used when returning partial file content so line numbers match original file positions.
+ * @param totalLinesInFile - The total number of lines in the original file, used for
+ *   consistent padding width. If not provided, padding is based on the content itself.
  * @returns Content with line numbers prefixed to each line
  * 
  * @example
  * addLineNumbers("hello\nworld")
  * // Returns: "1|hello\n2|world"
+ * 
+ * @example
+ * addLineNumbers("line50\nline51", 50, 200)
+ * // Returns: " 50|line50\n 51|line51"
  */
-export function addLineNumbers(content: string): string {
+export function addLineNumbers(content: string, startLineNumber: number = 1, totalLinesInFile?: number): string {
   if (!content) {
     return content;
   }
 
   const lines = content.split('\n');
-  const totalLines = lines.length;
-  const padding = String(totalLines).length;
+  const lastLineNumber = startLineNumber + lines.length - 1;
+  const padding = String(totalLinesInFile ?? lastLineNumber).length;
 
   return lines
     .map((line, index) => {
-      const lineNumber = String(index + 1).padStart(padding, ' ');
+      const lineNumber = String(startLineNumber + index).padStart(padding, ' ');
       return `${lineNumber}|${line}`;
     })
     .join('\n');

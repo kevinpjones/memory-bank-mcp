@@ -3,6 +3,7 @@ import {
   makeListProjectFilesController,
   makeListProjectsController,
   makePatchController,
+  makePeekController,
   makeReadController,
   makeUpdateController,
   makeWriteController,
@@ -74,11 +75,51 @@ export default () => {
             description: "Whether to include line numbers as metadata prefix in the returned content. When enabled, each line is prefixed with its 1-indexed line number followed by a pipe separator (e.g., '1|first line'). Useful for patch operations. Default: true",
             default: true,
           },
+          startLine: {
+            type: "integer",
+            description: "First line to read (1-based indexing). When omitted, reading starts from the beginning of the file.",
+          },
+          endLine: {
+            type: "integer",
+            description: "Last line to read (1-based indexing, inclusive). When omitted, reading continues to the end of the file.",
+          },
+          maxLines: {
+            type: "integer",
+            description: "Maximum number of lines to return. When used with startLine, returns up to maxLines starting from startLine. When used alone, returns the first maxLines of the file.",
+          },
         },
         required: ["projectName", "fileName"],
       },
     },
     handler: adaptMcpRequestHandler(makeReadController()),
+  });
+
+  router.setTool({
+    schema: {
+      name: "peek_file",
+      title: "Peek Memory Bank File",
+      description: "Quick inspection of a memory bank file. Returns file metadata (total line count) and a preview of the first N lines. Useful for understanding file size and content before reading the full file, preventing context overload with large files.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          projectName: {
+            type: "string",
+            description: "The name of the project",
+          },
+          fileName: {
+            type: "string",
+            description: "The name of the file to peek at",
+          },
+          previewLines: {
+            type: "integer",
+            description: "Number of lines to include in the preview (default: 10)",
+            default: 10,
+          },
+        },
+        required: ["projectName", "fileName"],
+      },
+    },
+    handler: adaptMcpRequestHandler(makePeekController()),
   });
 
   router.setTool({
