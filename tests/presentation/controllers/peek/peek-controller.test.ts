@@ -181,9 +181,10 @@ describe("PeekController", () => {
 
   it("should handle empty files correctly", async () => {
     const { sut, readFileUseCaseStub } = makeSut();
+    // Empty file: "".split('\n') gives [""] with length 1
     vi.spyOn(readFileUseCaseStub, "readFilePreview").mockResolvedValueOnce({
       content: "",
-      totalLines: 0,
+      totalLines: 1,
     });
     const request = {
       body: {
@@ -194,8 +195,9 @@ describe("PeekController", () => {
     const response = await sut.handle(request);
     expect(response.statusCode).toBe(200);
     const body = response.body as PeekFileResponse;
-    expect(body.totalLines).toBe(0);
-    expect(body.previewLineCount).toBe(0);
+    expect(body.totalLines).toBe(1);
+    expect(body.previewLineCount).toBe(1);
+    // addLineNumbers returns "" for empty content (falsy check)
     expect(body.preview).toBe("");
   });
 

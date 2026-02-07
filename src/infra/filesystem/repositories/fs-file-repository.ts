@@ -1,7 +1,5 @@
 import fs from "fs-extra";
 import path from "path";
-import { createReadStream } from "fs";
-import { createInterface } from "readline";
 import { FileRepository } from "../../../data/protocols/file-repository.js";
 import { File } from "../../../domain/entities/index.js";
 /**
@@ -53,8 +51,9 @@ export class FsFileRepository implements FileRepository {
   }
 
   /**
-   * Loads only the first maxLines from a file using streaming.
-   * Efficient for large files - does not load entire file into memory.
+   * Loads only the first maxLines from a file.
+   * Uses split('\n') for line counting to stay consistent with
+   * ReadController's partial-read logic (which also uses split('\n')).
    */
   async loadFilePreview(
     projectName: string,
@@ -68,31 +67,12 @@ export class FsFileRepository implements FileRepository {
       return null;
     }
 
-    return new Promise((resolve, reject) => {
-      const lines: string[] = [];
-      let totalLines = 0;
+    const fileContent = await fs.readFile(filePath, "utf-8");
+    const lines = fileContent.split("\n");
+    const totalLines = lines.length;
+    const content = lines.slice(0, maxLines).join("\n");
 
-      const rl = createInterface({
-        input: createReadStream(filePath, { encoding: "utf-8" }),
-        crlfDelay: Infinity,
-      });
-
-      rl.on("line", (line) => {
-        totalLines++;
-        if (lines.length < maxLines) {
-          lines.push(line);
-        }
-      });
-
-      rl.on("close", () => {
-        resolve({
-          content: lines.join("\n"),
-          totalLines,
-        });
-      });
-
-      rl.on("error", reject);
-    });
+    return { content, totalLines };
   }
 
   /**
