@@ -12,6 +12,8 @@ import {
   makeGetProjectHistoryController,
   makeGetFileAtTimeController,
   makeGetFileHistoryDiffController,
+  makeGrepFileController,
+  makeGrepProjectController,
 } from "../../factories/controllers/index.js";
 import { adaptMcpRequestHandler } from "./adapters/mcp-request-adapter.js";
 import { adaptMcpListPromptsHandler, adaptMcpGetPromptHandler } from "./adapters/mcp-prompt-adapter.js";
@@ -323,6 +325,88 @@ export default () => {
       },
     },
     handler: adaptMcpRequestHandler(makeGetFileHistoryDiffController()),
+  });
+
+  router.setTool({
+    schema: {
+      name: "memory_bank_grep_file",
+      title: "Grep Memory Bank File",
+      description:
+        "Search within a single file in a project's memory bank. Returns matches with surrounding context lines. Uses literal string matching (not regex).",
+      inputSchema: {
+        type: "object",
+        properties: {
+          projectName: {
+            type: "string",
+            description: "The name of the project",
+          },
+          fileName: {
+            type: "string",
+            description: "The name of the file to search within",
+          },
+          pattern: {
+            type: "string",
+            description: "Search pattern (literal string match, not regex)",
+          },
+          contextLines: {
+            type: "integer",
+            description:
+              "Number of context lines before and after each match (default: 2)",
+            default: 2,
+          },
+          caseSensitive: {
+            type: "boolean",
+            description:
+              "Whether search is case-sensitive (default: true)",
+            default: true,
+          },
+        },
+        required: ["projectName", "fileName", "pattern"],
+      },
+    },
+    handler: adaptMcpRequestHandler(makeGrepFileController()),
+  });
+
+  router.setTool({
+    schema: {
+      name: "memory_bank_grep_project",
+      title: "Grep Memory Bank Project",
+      description:
+        "Search across all files in a project's memory bank. Returns matches with surrounding context lines, grouped by file. Uses literal string matching (not regex).",
+      inputSchema: {
+        type: "object",
+        properties: {
+          projectName: {
+            type: "string",
+            description: "The name of the project",
+          },
+          pattern: {
+            type: "string",
+            description: "Search pattern (literal string match, not regex)",
+          },
+          contextLines: {
+            type: "integer",
+            description:
+              "Number of context lines before and after each match (default: 2)",
+            default: 2,
+          },
+          caseSensitive: {
+            type: "boolean",
+            description:
+              "Whether search is case-sensitive (default: true)",
+            default: true,
+          },
+          maxResults: {
+            type: "integer",
+            description:
+              "Maximum number of matches to return across all files (default: 100)",
+            default: 100,
+          },
+        },
+        required: ["projectName", "pattern"],
+      },
+    },
+    handler: adaptMcpRequestHandler(makeGrepProjectController()),
   });
 
   // Prompt endpoints
