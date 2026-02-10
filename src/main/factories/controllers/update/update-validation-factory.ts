@@ -12,7 +12,9 @@ const makeValidations = (): Validator[] => {
     new RequiredFieldValidator("projectName"),
     new RequiredFieldValidator("fileName"),
     new RequiredFieldValidator("content"),
-    new ParamNameValidator("projectName"),
+    // Note: ParamNameValidator is NOT applied to projectName because
+    // the MCP adapter resolves friendly names to directory names before
+    // the controller receives the request.
     new ParamNameValidator("fileName"),
     new PathSecurityValidator("projectName"),
     new PathSecurityValidator("fileName"),

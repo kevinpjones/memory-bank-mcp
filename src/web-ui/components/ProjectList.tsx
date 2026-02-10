@@ -17,13 +17,14 @@ export default function ProjectList({ projects, loading, onProjectArchived }: Pr
   const [archiveConfirm, setArchiveConfirm] = useState<string | null>(null);
   const [archiving, setArchiving] = useState<string | null>(null);
 
-  // Filter projects based on search term
+  // Filter projects based on search term (searches name, friendlyName, and description)
   const filteredProjects = useMemo(() => {
     if (!searchTerm.trim()) return projects;
     
     const term = searchTerm.toLowerCase();
     return projects.filter(project =>
       project.name.toLowerCase().includes(term) ||
+      (project.friendlyName && project.friendlyName.toLowerCase().includes(term)) ||
       (project.description && project.description.toLowerCase().includes(term))
     );
   }, [projects, searchTerm]);
@@ -263,11 +264,19 @@ export default function ProjectList({ projects, loading, onProjectArchived }: Pr
                         <ClipboardIcon className="w-4 h-4" />
                       )}
                     </button>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white 
-                                 group-hover:text-blue-600 dark:group-hover:text-blue-400 
-                                 transition-colors line-clamp-2 flex-1">
-                      {project.name}
-                    </h3>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white 
+                                   group-hover:text-blue-600 dark:group-hover:text-blue-400 
+                                   transition-colors line-clamp-2">
+                        {project.friendlyName || project.name}
+                      </h3>
+                      {project.friendlyName && project.friendlyName !== project.name && (
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate"
+                           title={project.name}>
+                          {project.name}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <DocumentTextIcon className="w-5 h-5 text-gray-400 group-hover:text-blue-500 
                                              transition-colors flex-shrink-0 ml-2" />

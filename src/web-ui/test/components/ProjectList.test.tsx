@@ -17,23 +17,27 @@ twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
 const mockProjects: ProjectInfo[] = [
   {
     name: 'Test Project 1',
+    friendlyName: 'Test Project 1',
     description: 'A test project for memory bank',
     lastModified: today,
     fileCount: 5,
   },
   {
     name: 'Another Project',
+    friendlyName: 'Another Project',
     description: 'Another project for testing',
     lastModified: yesterday,
     fileCount: 3,
   },
   {
     name: 'API Documentation',
+    friendlyName: 'API Documentation',
     lastModified: lastWeek,
     fileCount: 10,
   },
   {
     name: 'Old Project',
+    friendlyName: 'Old Project',
     description: 'Project from two weeks ago',
     lastModified: twoWeeksAgo,
     fileCount: 2,
