@@ -24,19 +24,9 @@ import {
   adaptMcpGetPromptHandler,
 } from "./adapters/mcp-prompt-adapter.js";
 import { withProjectResolution } from "./adapters/mcp-project-resolution-adapter.js";
-import { McpRouterAdapter, MCPRequestHandler } from "./adapters/mcp-router-adapter.js";
+import { McpRouterAdapter, MCPRequestHandler, ToolResponse } from "./adapters/mcp-router-adapter.js";
 import { Request as MCPRequest, ServerResult } from "@modelcontextprotocol/sdk/types.js";
 import { ProjectInfo } from "../../../domain/entities/index.js";
-
-/**
- * Shape of a tool response from the MCP request adapter.
- * The SDK's ServerResult is a union type, so we define the shape we expect.
- */
-interface ToolResponse {
-  content?: Array<{ type: string; text: string }>;
-  isError?: boolean;
-  [key: string]: unknown;
-}
 
 export default () => {
   const router = new McpRouterAdapter();

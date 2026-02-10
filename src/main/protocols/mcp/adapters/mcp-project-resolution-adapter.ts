@@ -4,17 +4,7 @@ import {
 import { ProjectNameResolverService } from "../../../../data/services/project-name-resolver.js";
 import { MetadataRepository } from "../../../../data/protocols/metadata-repository.js";
 import { ProjectIndexRepository } from "../../../../data/protocols/project-index-repository.js";
-import { MCPRequestHandler } from "./mcp-router-adapter.js";
-
-/**
- * Shape of a tool response from the MCP request adapter.
- * The SDK's ServerResult is a union type, so we define the shape we expect.
- */
-interface ToolResponse {
-  content?: Array<{ type: string; text: string }>;
-  isError?: boolean;
-  [key: string]: unknown;
-}
+import { MCPRequestHandler, ToolResponse } from "./mcp-router-adapter.js";
 
 export type ResolutionMode = "read" | "write";
 
