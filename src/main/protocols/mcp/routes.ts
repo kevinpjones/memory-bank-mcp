@@ -24,8 +24,19 @@ import {
   adaptMcpGetPromptHandler,
 } from "./adapters/mcp-prompt-adapter.js";
 import { withProjectResolution } from "./adapters/mcp-project-resolution-adapter.js";
-import { McpRouterAdapter } from "./adapters/mcp-router-adapter.js";
+import { McpRouterAdapter, MCPRequestHandler } from "./adapters/mcp-router-adapter.js";
+import { Request as MCPRequest, ServerResult } from "@modelcontextprotocol/sdk/types.js";
 import { ProjectInfo } from "../../../domain/entities/index.js";
+
+/**
+ * Shape of a tool response from the MCP request adapter.
+ * The SDK's ServerResult is a union type, so we define the shape we expect.
+ */
+interface ToolResponse {
+  content?: Array<{ type: string; text: string }>;
+  isError?: boolean;
+  [key: string]: unknown;
+}
 
 export default () => {
   const router = new McpRouterAdapter();
@@ -492,23 +503,24 @@ export default () => {
    * Creates an enriched list_projects handler that returns ProjectInfo objects
    * (with both directory name and friendly name) instead of plain strings.
    */
-  function createEnrichedListProjectsHandler(): Promise<(request: any) => Promise<any>> {
+  function createEnrichedListProjectsHandler(): Promise<MCPRequestHandler> {
     const baseHandler = adaptMcpRequestHandler(makeListProjectsController());
 
     return baseHandler.then((handler) => {
-      return async (request: any) => {
-        const response = (await handler(request)) as any;
+      return async (request: MCPRequest): Promise<ServerResult> => {
+        const response = await handler(request);
+        const toolResponse = response as ToolResponse;
 
         // If error, pass through
-        if (response.isError) {
+        if (toolResponse.isError) {
           return response;
         }
 
         try {
           // Parse the original response (JSON array of strings)
           const text =
-            response.content?.[0]?.type === "text"
-              ? response.content[0].text
+            toolResponse.content?.[0]?.type === "text"
+              ? toolResponse.content[0].text
               : null;
           if (!text) return response;
 
