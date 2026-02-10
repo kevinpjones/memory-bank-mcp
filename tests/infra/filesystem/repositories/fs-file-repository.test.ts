@@ -48,6 +48,23 @@ describe("FsFileRepository", () => {
       expect(result).toHaveLength(2);
       expect(result).toEqual(expect.arrayContaining(["file1.md", "file2.txt"]));
     });
+
+    it("should exclude dot-prefixed files like .metadata.json", async () => {
+      await fs.writeFile(path.join(tempDir, projectName, "file1.md"), "test");
+      await fs.writeFile(
+        path.join(tempDir, projectName, ".metadata.json"),
+        '{"friendlyName":"test"}'
+      );
+      await fs.writeFile(
+        path.join(tempDir, projectName, ".index"),
+        "{}"
+      );
+
+      const result = await repository.listFiles(projectName);
+
+      expect(result).toHaveLength(1);
+      expect(result).toEqual(["file1.md"]);
+    });
   });
 
   describe("loadFile", () => {
