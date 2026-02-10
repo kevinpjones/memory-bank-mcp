@@ -109,7 +109,6 @@ async function handleReadMode(
   indexRepo?: ProjectIndexRepository
 ) {
   const resolved = await resolver.resolve(originalName);
-  const directoryName = resolved ?? originalName;
 
   // Lazy metadata creation: if this project exists but has no metadata,
   // backfill it with directoryName as friendlyName for gradual migration.
@@ -135,18 +134,23 @@ function ensureLazyMetadata(
   indexRepo: ProjectIndexRepository
 ): void {
   // Run asynchronously without blocking
-  metadataRepo.readMetadata(directoryName).then((existing) => {
-    if (existing !== null) return; // Already has metadata
-    const metadata = {
-      friendlyName: directoryName,
-      directoryName,
-      createdAt: new Date().toISOString(),
-    };
-    return metadataRepo
-      .writeMetadata(directoryName, metadata)
-      .then(() => indexRepo.setMapping(directoryName, directoryName))
-      .catch(() => {}); // Swallow errors — lazy backfill is best-effort
-  }).catch(() => {}); // Swallow errors
+  (async () => {
+    try {
+      const existing = await metadataRepo.readMetadata(directoryName);
+      if (existing !== null) {
+        return; // Already has metadata
+      }
+      const metadata = {
+        friendlyName: directoryName,
+        directoryName,
+        createdAt: new Date().toISOString(),
+      };
+      await metadataRepo.writeMetadata(directoryName, metadata);
+      await indexRepo.setMapping(directoryName, directoryName);
+    } catch {
+      // Swallow errors — lazy backfill is best-effort
+    }
+  })();
 }
 
 function createModifiedRequest(
