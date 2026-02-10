@@ -97,13 +97,13 @@ export function normalizeProjectName(input: string): string {
   normalized = normalized.replace(/\.{2,}/g, ".");
 
   // Remove leading/trailing hyphens and dots
-  normalized = normalized.replace(/^[-.]/, "").replace(/[-.]$/, "");
+  normalized = normalized.replace(/^[-.]+|[-.]+$/g, "");
 
   // Truncate to max length
   if (normalized.length > MAX_NAME_LENGTH) {
     normalized = normalized.slice(0, MAX_NAME_LENGTH);
     // Clean up trailing hyphens/dots from truncation
-    normalized = normalized.replace(/[-.]$/, "");
+    normalized = normalized.replace(/[-.]+$/, "");
   }
 
   if (!normalized) {

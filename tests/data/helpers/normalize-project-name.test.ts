@@ -152,6 +152,18 @@ describe("normalizeProjectName", () => {
     it("should remove trailing dots", () => {
       expect(normalizeProjectName("my-project.")).toBe("my-project");
     });
+
+    it("should remove multiple leading hyphens and dots", () => {
+      expect(normalizeProjectName("--..my-project")).toBe("my-project");
+    });
+
+    it("should remove multiple trailing hyphens and dots", () => {
+      expect(normalizeProjectName("my-project.-.-")).toBe("my-project");
+    });
+
+    it("should handle alternating leading special chars like -.foo", () => {
+      expect(normalizeProjectName("-.foo")).toBe("foo");
+    });
   });
 
   describe("length constraints", () => {
