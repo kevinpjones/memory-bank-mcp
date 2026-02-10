@@ -116,6 +116,18 @@ describe("normalizeProjectName", () => {
     it("should handle emoji by stripping them", () => {
       expect(normalizeProjectName("🚀 My Project")).toBe("my-project");
     });
+
+    it("should transliterate NFD-encoded umlauts (e.g. macOS decomposed forms)", () => {
+      // NFD: u + combining diaeresis (U+0308) instead of precomposed ü (U+00FC)
+      const nfdUber = "U\u0308ber Projekt";
+      expect(normalizeProjectName(nfdUber)).toBe("ueber-projekt");
+    });
+
+    it("should produce the same result for NFC and NFD input", () => {
+      const nfc = "\u00FC"; // ü precomposed
+      const nfd = "u\u0308"; // u + combining diaeresis
+      expect(normalizeProjectName(nfc)).toBe(normalizeProjectName(nfd));
+    });
   });
 
   describe("consecutive separators", () => {

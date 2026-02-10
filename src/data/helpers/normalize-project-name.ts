@@ -78,6 +78,11 @@ export function normalizeProjectName(input: string): string {
 
   let normalized = input.trim().toLowerCase();
 
+  // Normalize to NFC so decomposed Unicode (e.g. NFD from macOS) is precomposed
+  // before transliteration. Without this, decomposed forms like u+\u0308 won't
+  // match the TRANSLITERATIONS map entries for precomposed characters like ü.
+  normalized = normalized.normalize("NFC");
+
   // Transliterate common Unicode characters
   normalized = normalized
     .split("")
