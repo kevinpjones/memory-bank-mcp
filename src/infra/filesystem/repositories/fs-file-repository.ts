@@ -28,7 +28,10 @@ export class FsFileRepository implements FileRepository {
     }
 
     const entries = await fs.readdir(projectPath, { withFileTypes: true });
-    return entries.filter((entry) => entry.isFile()).map((entry) => entry.name);
+    return entries
+      .filter((entry) => entry.isFile())
+      .filter((entry) => !entry.name.startsWith("."))
+      .map((entry) => entry.name);
   }
 
   /**

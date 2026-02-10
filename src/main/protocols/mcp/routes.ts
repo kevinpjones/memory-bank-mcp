@@ -15,14 +15,43 @@ import {
   makeGrepFileController,
   makeGrepProjectController,
 } from "../../factories/controllers/index.js";
+import { makeMetadataRepository } from "../../factories/repositories/metadata-repository-factory.js";
+import { makeProjectIndexRepository } from "../../factories/repositories/project-index-repository-factory.js";
+import { makeProjectNameResolver } from "../../factories/services/project-name-resolver-factory.js";
 import { adaptMcpRequestHandler } from "./adapters/mcp-request-adapter.js";
-import { adaptMcpListPromptsHandler, adaptMcpGetPromptHandler } from "./adapters/mcp-prompt-adapter.js";
-import { McpRouterAdapter } from "./adapters/mcp-router-adapter.js";
+import {
+  adaptMcpListPromptsHandler,
+  adaptMcpGetPromptHandler,
+} from "./adapters/mcp-prompt-adapter.js";
+import { withProjectResolution } from "./adapters/mcp-project-resolution-adapter.js";
+import { McpRouterAdapter, MCPRequestHandler, ToolResponse } from "./adapters/mcp-router-adapter.js";
+import { Request as MCPRequest, ServerResult } from "@modelcontextprotocol/sdk/types.js";
+import { ProjectInfo } from "../../../domain/entities/index.js";
 
 export default () => {
   const router = new McpRouterAdapter();
 
-  // Tool endpoints
+  // Create shared resolution dependencies (singletons for this router instance)
+  const resolver = makeProjectNameResolver();
+  const metadataRepo = makeMetadataRepository();
+  const indexRepo = makeProjectIndexRepository();
+
+  /**
+   * Helper to wrap a handler with read-mode project name resolution.
+   * Resolves friendly names to directory names before calling the controller.
+   */
+  const withReadResolution = (handler: Promise<ReturnType<typeof adaptMcpRequestHandler> extends Promise<infer R> ? R : never>) =>
+    withProjectResolution(handler as any, resolver, metadataRepo, indexRepo, "read");
+
+  /**
+   * Helper to wrap a handler with write-mode project name resolution.
+   * Resolves + normalizes for creation, writes metadata for new projects.
+   */
+  const withWriteResolution = (handler: Promise<ReturnType<typeof adaptMcpRequestHandler> extends Promise<infer R> ? R : never>) =>
+    withProjectResolution(handler as any, resolver, metadataRepo, indexRepo, "write");
+
+  // ─── Tool endpoints ──────────────────────────────────────────────────
+
   router.setTool({
     schema: {
       name: "list_projects",
@@ -34,7 +63,7 @@ export default () => {
         required: [],
       },
     },
-    handler: adaptMcpRequestHandler(makeListProjectsController()),
+    handler: createEnrichedListProjectsHandler(),
   });
 
   router.setTool({
@@ -53,7 +82,9 @@ export default () => {
         required: ["projectName"],
       },
     },
-    handler: adaptMcpRequestHandler(makeListProjectFilesController()),
+    handler: withReadResolution(
+      adaptMcpRequestHandler(makeListProjectFilesController())
+    ),
   });
 
   router.setTool({
@@ -74,33 +105,40 @@ export default () => {
           },
           includeLineNumbers: {
             type: "boolean",
-            description: "Whether to include line numbers as metadata prefix in the returned content. When enabled, each line is prefixed with its 1-indexed line number followed by a pipe separator (e.g., '1|first line'). Useful for patch operations. Default: true",
+            description:
+              "Whether to include line numbers as metadata prefix in the returned content. When enabled, each line is prefixed with its 1-indexed line number followed by a pipe separator (e.g., '1|first line'). Useful for patch operations. Default: true",
             default: true,
           },
           startLine: {
             type: "integer",
-            description: "First line to read (1-based indexing). When omitted, reading starts from the beginning of the file.",
+            description:
+              "First line to read (1-based indexing). When omitted, reading starts from the beginning of the file.",
           },
           endLine: {
             type: "integer",
-            description: "Last line to read (1-based indexing, inclusive). When omitted, reading continues to the end of the file.",
+            description:
+              "Last line to read (1-based indexing, inclusive). When omitted, reading continues to the end of the file.",
           },
           maxLines: {
             type: "integer",
-            description: "Maximum number of lines to return. When used with startLine, returns up to maxLines starting from startLine. When used alone, returns the first maxLines of the file.",
+            description:
+              "Maximum number of lines to return. When used with startLine, returns up to maxLines starting from startLine. When used alone, returns the first maxLines of the file.",
           },
         },
         required: ["projectName", "fileName"],
       },
     },
-    handler: adaptMcpRequestHandler(makeReadController()),
+    handler: withReadResolution(
+      adaptMcpRequestHandler(makeReadController())
+    ),
   });
 
   router.setTool({
     schema: {
       name: "peek_file",
       title: "Peek Memory Bank File",
-      description: "Quick inspection of a memory bank file. Returns file metadata (total line count) and a preview of the first N lines. Useful for understanding file size and content before reading the full file, preventing context overload with large files.",
+      description:
+        "Quick inspection of a memory bank file. Returns file metadata (total line count) and a preview of the first N lines. Useful for understanding file size and content before reading the full file, preventing context overload with large files.",
       inputSchema: {
         type: "object",
         properties: {
@@ -114,14 +152,17 @@ export default () => {
           },
           previewLines: {
             type: "integer",
-            description: "Number of lines to include in the preview (default: 10)",
+            description:
+              "Number of lines to include in the preview (default: 10)",
             default: 10,
           },
         },
         required: ["projectName", "fileName"],
       },
     },
-    handler: adaptMcpRequestHandler(makePeekController()),
+    handler: withReadResolution(
+      adaptMcpRequestHandler(makePeekController())
+    ),
   });
 
   router.setTool({
@@ -148,14 +189,17 @@ export default () => {
         required: ["projectName", "fileName", "content"],
       },
     },
-    handler: adaptMcpRequestHandler(makeWriteController()),
+    handler: withWriteResolution(
+      adaptMcpRequestHandler(makeWriteController())
+    ),
   });
 
   router.setTool({
     schema: {
       name: "memory_bank_update",
       title: "Update Memory Bank File",
-      description: "Update an existing memory bank file for a specific project",
+      description:
+        "Update an existing memory bank file for a specific project",
       inputSchema: {
         type: "object",
         properties: {
@@ -175,13 +219,16 @@ export default () => {
         required: ["projectName", "fileName", "content"],
       },
     },
-    handler: adaptMcpRequestHandler(makeUpdateController()),
+    handler: withReadResolution(
+      adaptMcpRequestHandler(makeUpdateController())
+    ),
   });
 
   router.setTool({
     schema: {
       name: "memory_bank_delete",
-      description: "Delete a memory bank file by archiving it with a timestamp",
+      description:
+        "Delete a memory bank file by archiving it with a timestamp",
       inputSchema: {
         type: "object",
         properties: {
@@ -197,7 +244,9 @@ export default () => {
         required: ["projectName", "fileName"],
       },
     },
-    handler: adaptMcpRequestHandler(makeDeleteController()),
+    handler: withReadResolution(
+      adaptMcpRequestHandler(makeDeleteController())
+    ),
   });
 
   router.setTool({
@@ -247,14 +296,17 @@ export default () => {
         ],
       },
     },
-    handler: adaptMcpRequestHandler(makePatchController()),
+    handler: withReadResolution(
+      adaptMcpRequestHandler(makePatchController())
+    ),
   });
 
   router.setTool({
     schema: {
       name: "get_project_history",
       title: "Get Project History",
-      description: "Get the change history for all files in a project. Returns metadata (timestamp, action, actor, fileName) for all historical changes without file content for efficient browsing.",
+      description:
+        "Get the change history for all files in a project. Returns metadata (timestamp, action, actor, fileName) for all historical changes without file content for efficient browsing.",
       inputSchema: {
         type: "object",
         properties: {
@@ -266,14 +318,17 @@ export default () => {
         required: ["projectName"],
       },
     },
-    handler: adaptMcpRequestHandler(makeGetProjectHistoryController()),
+    handler: withReadResolution(
+      adaptMcpRequestHandler(makeGetProjectHistoryController())
+    ),
   });
 
   router.setTool({
     schema: {
       name: "get_file_at_time",
       title: "Get File At Time",
-      description: "Retrieve the content of a specific file at a specific point in time. Use this after browsing project history to get the actual content of a file at a particular timestamp.",
+      description:
+        "Retrieve the content of a specific file at a specific point in time. Use this after browsing project history to get the actual content of a file at a particular timestamp.",
       inputSchema: {
         type: "object",
         properties: {
@@ -287,20 +342,24 @@ export default () => {
           },
           timestamp: {
             type: "string",
-            description: "ISO 8601 timestamp to get the file content at (e.g., '2024-01-15T10:30:00.000Z')",
+            description:
+              "ISO 8601 timestamp to get the file content at (e.g., '2024-01-15T10:30:00.000Z')",
           },
         },
         required: ["projectName", "fileName", "timestamp"],
       },
     },
-    handler: adaptMcpRequestHandler(makeGetFileAtTimeController()),
+    handler: withReadResolution(
+      adaptMcpRequestHandler(makeGetFileAtTimeController())
+    ),
   });
 
   router.setTool({
     schema: {
       name: "get_project_file_history_diff",
       title: "Get File History Diff",
-      description: "Generate a unified diff between two versions of a file. Returns standard unified diff format (similar to git diff) showing additions, deletions, and context lines.",
+      description:
+        "Generate a unified diff between two versions of a file. Returns standard unified diff format (similar to git diff) showing additions, deletions, and context lines.",
       inputSchema: {
         type: "object",
         properties: {
@@ -318,13 +377,16 @@ export default () => {
           },
           versionTo: {
             type: "integer",
-            description: "Target version number (1-based, optional - defaults to current/latest version)",
+            description:
+              "Target version number (1-based, optional - defaults to current/latest version)",
           },
         },
         required: ["projectName", "fileName", "versionFrom"],
       },
     },
-    handler: adaptMcpRequestHandler(makeGetFileHistoryDiffController()),
+    handler: withReadResolution(
+      adaptMcpRequestHandler(makeGetFileHistoryDiffController())
+    ),
   });
 
   router.setTool({
@@ -364,7 +426,9 @@ export default () => {
         required: ["projectName", "fileName", "pattern"],
       },
     },
-    handler: adaptMcpRequestHandler(makeGrepFileController()),
+    handler: withReadResolution(
+      adaptMcpRequestHandler(makeGrepFileController())
+    ),
   });
 
   router.setTool({
@@ -406,10 +470,13 @@ export default () => {
         required: ["projectName", "pattern"],
       },
     },
-    handler: adaptMcpRequestHandler(makeGrepProjectController()),
+    handler: withReadResolution(
+      adaptMcpRequestHandler(makeGrepProjectController())
+    ),
   });
 
-  // Prompt endpoints
+  // ─── Prompt endpoints ────────────────────────────────────────────────
+
   router.setPromptListHandler(
     adaptMcpListPromptsHandler(makeListPromptsController())
   );
@@ -419,4 +486,65 @@ export default () => {
   );
 
   return router;
+
+  // ─── Internal helpers ────────────────────────────────────────────────
+
+  /**
+   * Creates an enriched list_projects handler that returns ProjectInfo objects
+   * (with both directory name and friendly name) instead of plain strings.
+   */
+  function createEnrichedListProjectsHandler(): Promise<MCPRequestHandler> {
+    const baseHandler = adaptMcpRequestHandler(makeListProjectsController());
+
+    return baseHandler.then((handler) => {
+      return async (request: MCPRequest): Promise<ServerResult> => {
+        const response = await handler(request);
+        const toolResponse = response as ToolResponse;
+
+        // If error, pass through
+        if (toolResponse.isError) {
+          return response;
+        }
+
+        try {
+          // Parse the original response (JSON array of strings)
+          const text =
+            toolResponse.content?.[0]?.type === "text"
+              ? toolResponse.content[0].text
+              : null;
+          if (!text) return response;
+
+          const projects: string[] = JSON.parse(text);
+
+          // Enrich each project with friendly name from metadata
+          const enriched: ProjectInfo[] = await Promise.all(
+            projects.map(async (dirName) => {
+              try {
+                const metadata = await metadataRepo.readMetadata(dirName);
+                return {
+                  name: dirName,
+                  friendlyName: metadata?.friendlyName ?? dirName,
+                };
+              } catch {
+                return { name: dirName, friendlyName: dirName };
+              }
+            })
+          );
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(enriched, null, 2),
+              },
+            ],
+            isError: false,
+          };
+        } catch {
+          // If enrichment fails, return original response
+          return response;
+        }
+      };
+    });
+  }
 };

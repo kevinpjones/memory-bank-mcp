@@ -2,6 +2,7 @@ import path from 'path';
 import { FsProjectRepository } from '../../infra/filesystem/repositories/fs-project-repository.js';
 import { FsFileRepository } from '../../infra/filesystem/repositories/fs-file-repository.js';
 import { FsPromptRepository } from '../../infra/filesystem/repositories/fs-prompt-repository.js';
+import { FsMetadataRepository } from '../../infra/filesystem/repositories/fs-metadata-repository.js';
 import { ListProjects } from '../../data/usecases/list-projects/list-projects.js';
 import { ListProjectFiles } from '../../data/usecases/list-project-files/list-project-files.js';
 import { ReadFile } from '../../data/usecases/read-file/read-file.js';
@@ -18,6 +19,7 @@ export const config = {
 const projectRepository = new FsProjectRepository(config.memoryBankRoot);
 const fileRepository = new FsFileRepository(config.memoryBankRoot);
 const promptRepository = new FsPromptRepository(config.memoryBankRoot);
+const metadataRepository = new FsMetadataRepository(config.memoryBankRoot);
 
 // Initialize use cases
 export const listProjectsUseCase = new ListProjects(projectRepository);
@@ -29,6 +31,7 @@ export const getPromptUseCase = new GetPrompt(promptRepository);
 // Additional interfaces for the web UI
 export interface ProjectInfo {
   name: string;
+  friendlyName: string;
   description?: string;
   lastModified: Date;
   fileCount: number;
@@ -86,6 +89,17 @@ export class MemoryBankService {
       try {
         const files = await this.getProjectFiles(name);
         
+        // Read metadata for friendly name (falls back to directory name)
+        let friendlyName = name;
+        try {
+          const metadata = await metadataRepository.readMetadata(name);
+          if (metadata?.friendlyName) {
+            friendlyName = metadata.friendlyName;
+          }
+        } catch {
+          // Ignore metadata read errors — use directory name
+        }
+        
         // Find the most recent file modification date within the project
         let mostRecentModification = new Date(0); // Start with epoch
         for (const file of files) {
@@ -103,6 +117,7 @@ export class MemoryBankService {
         
         projects.push({
           name,
+          friendlyName,
           lastModified: mostRecentModification,
           fileCount: files.length,
           description: await this.getProjectDescription(name),
@@ -111,6 +126,7 @@ export class MemoryBankService {
         console.warn(`Error processing project ${name}:`, error);
         projects.push({
           name,
+          friendlyName: name,
           lastModified: new Date(),
           fileCount: 0,
         });

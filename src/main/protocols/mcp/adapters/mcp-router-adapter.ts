@@ -7,6 +7,17 @@ import {
 
 export type MCPRequestHandler = (request: MCPRequest) => Promise<MCPResponse>;
 
+/**
+ * Shape of a tool response from the MCP request adapter.
+ * The SDK's ServerResult is a union type, so we define the shape we expect
+ * for tool call responses that include content and error status.
+ */
+export interface ToolResponse {
+  content?: Array<{ type: string; text: string }>;
+  isError?: boolean;
+  [key: string]: unknown;
+}
+
 export type MCPRoute = {
   schema: Tool;
   handler: Promise<MCPRequestHandler>;
