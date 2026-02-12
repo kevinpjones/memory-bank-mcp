@@ -11,6 +11,35 @@ interface MarkdownRendererProps {
 }
 
 export default function MarkdownRenderer({ children, className = 'prose prose-gray dark:prose-invert max-w-none' }: MarkdownRendererProps) {
+  // Preprocess the markdown to handle bullet characters and improve nesting
+  const preprocessMarkdown = (markdown: string): string => {
+    const processed = markdown
+      // Convert • bullets to standard - bullets, ensuring 4+ space indentation for nesting
+      .replace(/^(\s+)• /gm, (match, indent) => {
+        // If indented (likely nested), ensure at least 4 spaces
+        return indent.length >= 4 ? `${indent}- ` : '    - ';
+      })
+      // Handle • at beginning of line (not indented)
+      .replace(/^• /gm, '- ')
+      // Convert other bullet characters
+      .replace(/^(\s*)◦ /gm, '$1- ')
+      .replace(/^(\s*)▪ /gm, '$1- ')
+      // Fix any 3-space indentations to 4-space
+      .replace(/^   -/gm, '    -')
+      .replace(/^   \*/gm, '    *')
+      .replace(/^   \+/gm, '    +');
+    
+    // Debug logging (remove in production)
+    if (process.env.NODE_ENV === 'development' && markdown.includes('•')) {
+      console.log('Original markdown:', markdown);
+      console.log('Processed markdown:', processed);
+    }
+    
+    return processed;
+  };
+
+  const processedMarkdown = preprocessMarkdown(children);
+
   return (
     <div className={className}>
       <ReactMarkdown
@@ -47,24 +76,45 @@ export default function MarkdownRenderer({ children, className = 'prose prose-gr
               {children}
             </a>
           ),
-          ul: ({ children, ...props }) => (
-            <ul className="list-disc list-inside space-y-1 my-4" {...props}>
-              {children}
-            </ul>
-          ),
-          ol: ({ children, ...props }) => (
-            <ol className="list-decimal list-inside space-y-1 my-4" {...props}>
-              {children}
-            </ol>
-          ),
-          li: ({ children, ...props }) => (
-            <li className="mb-1" {...props}>
-              {children}
-            </li>
-          ),
+          ul: ({ children, node, ...props }: any) => {
+            // Check if this ul is nested inside another list item
+            const isNested = node?.parent?.tagName === 'li';
+            const baseClasses = "list-disc list-outside space-y-1";
+            const spacingClasses = isNested ? "ml-4 my-1" : "ml-6 my-4";
+            
+            return (
+              <ul className={`${baseClasses} ${spacingClasses}`} {...props}>
+                {children}
+              </ul>
+            );
+          },
+          ol: ({ children, node, ...props }: any) => {
+            // Check if this ol is nested inside another list item
+            const isNested = node?.parent?.tagName === 'li';
+            const baseClasses = "list-decimal list-outside space-y-1";
+            const spacingClasses = isNested ? "ml-4 my-1" : "ml-6 my-4";
+            
+            return (
+              <ol className={`${baseClasses} ${spacingClasses}`} {...props}>
+                {children}
+              </ol>
+            );
+          },
+          li: ({ children, node, ...props }: any) => {
+            // Check if this li contains nested lists
+            const hasNestedList = node?.children?.some((child: any) => 
+              child.tagName === 'ul' || child.tagName === 'ol'
+            );
+            
+            return (
+              <li className={`mb-1 pl-1 ${hasNestedList ? 'space-y-1' : ''}`} {...props}>
+                {children}
+              </li>
+            );
+          },
         }}
       >
-        {children}
+        {processedMarkdown}
       </ReactMarkdown>
     </div>
   );
